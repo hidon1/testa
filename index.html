@@ -1556,7 +1556,6 @@
     .overlay.open{display:block}
 
     .paymentModal,
-    .paymentGatewayModal,
     .termsModal{
       position:fixed;
       inset:0;
@@ -1570,24 +1569,9 @@
     }
 
     .paymentModal.open,
-    .paymentGatewayModal.open,
     .termsModal.open{display:flex}
 
     .paymentCard{
-      width:min(920px,95vw);
-      display:grid;
-      gap:8px;
-      max-height:100%;
-      overflow:hidden;
-    }
-
-    .paymentGatewayModal{
-      z-index:1400;
-      background:rgba(15,10,5,.82);
-      backdrop-filter:blur(4px);
-    }
-
-    .paymentGatewayCard{
       width:min(1180px,98vw);
       display:grid;
       gap:12px;
@@ -1597,7 +1581,7 @@
       border-radius:26px;
       border:1px solid rgba(94,59,17,.2);
       box-shadow:0 24px 60px rgba(0,0,0,.38);
-      overflow:hidden;
+      overflow:auto;
     }
 
     .paymentHead{
@@ -1608,7 +1592,7 @@
       gap:10px;
     }
 
-    .paymentGatewayHead{
+    .embeddedPaymentHead{
       display:flex;
       justify-content:space-between;
       align-items:flex-start;
@@ -1616,13 +1600,23 @@
       color:#3b2d1c;
     }
 
-    .paymentGatewayHead strong{
+    .embeddedPaymentHead strong{
       display:block;
       font-size:1.15rem;
       margin-bottom:4px;
     }
 
-    .paymentGatewayHead p{
+    .embeddedPaymentPanel{
+      background:#fff;
+      border-radius:22px;
+      border:1px solid rgba(97,59,20,.18);
+      box-shadow:0 16px 34px rgba(0,0,0,.16);
+      padding:18px;
+      display:grid;
+      gap:12px;
+    }
+
+    .embeddedPaymentHead p{
       margin:0;
       color:#5f4c37;
       line-height:1.6;
@@ -2000,13 +1994,11 @@
       .productTagline{font-size:.78rem;line-height:1.2}
       .productFlour{font-size:.8rem;line-height:1.2}
       .price{font-size:1rem}
-      .paymentModal,
-      .paymentGatewayModal{align-items:flex-start}
-      .paymentCard,
-      .paymentGatewayCard{width:min(1180px,100%);margin:auto 0;max-height:calc(100vh - 20px)}
+      .paymentModal{align-items:flex-start}
+      .paymentCard{width:min(1180px,100%);margin:auto 0;max-height:calc(100vh - 20px)}
       .checkoutFormCard{max-height:calc(100vh - 120px)}
       .paymentFrame{min-height:78vh;height:min(88vh,1200px)}
-      .paymentGatewayHead{flex-direction:column;align-items:stretch}
+      .embeddedPaymentHead{flex-direction:column;align-items:stretch}
       .paymentGatewayActions{justify-content:stretch}
       .paymentGatewayActions > *{width:100%}
       .reveal,
@@ -2519,30 +2511,28 @@
         <button class="btn" type="submit">המשך לרכישה</button>
       </form>
 
-    </div>
-  </div>
+      <div class="embeddedPaymentPanel" id="embeddedPaymentPanel" hidden>
+        <div class="embeddedPaymentHead">
+          <div>
+            <strong>סליקה באתר עצמו</strong>
+            <p>חלון הסליקה נטען כאן בתוך האתר, במקביל לפרטי ההזמנה שהלקוח מילא.</p>
+          </div>
+          <div class="paymentGatewayActions">
+            <a class="btn alt" id="paymentExternalLink" href="#" target="_blank" rel="noopener noreferrer">פתיחת הסליקה בחלון נפרד</a>
+            <button class="btn alt" type="button" id="closeEmbeddedPayment">סגירת חלון הסליקה</button>
+          </div>
+        </div>
 
-  <div class="paymentGatewayModal" id="paymentGatewayModal" aria-hidden="true">
-    <div class="paymentGatewayCard">
-      <div class="paymentGatewayHead">
-        <div>
-          <strong>חלון סליקה מוגדל</strong>
-          <p>הסליקה נפתחת מעל חלון הפרטים כדי לאפשר מעבר חלק, עם אייפריים גבוה במיוחד וקישור עצמאי לגיבוי.</p>
-        </div>
-        <div class="paymentGatewayActions">
-          <a class="btn alt" id="paymentExternalLink" href="#" target="_blank" rel="noopener noreferrer">פתיחת הסליקה בחלון נפרד</a>
-          <button class="btn" type="button" id="closePaymentGateway">חזרה לפרטי ההזמנה</button>
-        </div>
+        <p class="paymentLinkNote">כל פרטי ההזמנה, כולל כתובת, מיקום עיר, עלות משלוח ופירוט המוצרים, נשלחים ללינק הסליקה. אם ספק הסליקה חוסם טעינה בתוך iframe, אפשר להשתמש גם בקישור הישיר.</p>
+
+        <iframe
+          class="paymentFrame"
+          id="paymentFrame"
+          title="מערכת סליקה"
+          src="about:blank">
+        </iframe>
       </div>
 
-      <p class="paymentLinkNote">אם חברת הסליקה חוסמת טעינה בתוך האתר, אפשר להשתמש בקישור הישיר והוא יעבוד כעמוד עצמאי.</p>
-
-      <iframe
-        class="paymentFrame"
-        id="paymentFrame"
-        title="מערכת סליקה"
-        src="about:blank">
-      </iframe>
     </div>
   </div>
 
@@ -2586,7 +2576,8 @@
         packageLine:'כ5-7 מצות',
         flourLine:'100% קמח מלא',
         price:125,
-        img:'מוצרים/לאפה אבהתנא קמח חיטה מלא 1 ק״ג - מכירה 115.jpg'
+        img:'מוצרים/לאפה אבהתנא קמח חיטה מלא 1 ק״ג - מכירה 115.jpg',
+        tranzilaIndex:4
       },
       {
         id:8,
@@ -2596,7 +2587,8 @@
         packageLine:'',
         flourLine:' ● 100% קמח מלא',
         price:67,
-        img:'מוצרים/לאפה אבהתנא קמח חיטה מלא חצי ק״ג  מכירה 60.jpg'
+        img:'מוצרים/לאפה אבהתנא קמח חיטה מלא חצי ק״ג  מכירה 60.jpg',
+        tranzilaIndex:8
       },
       {
         id:2,
@@ -2606,7 +2598,8 @@
         packageLine:'כ-28 מצות',
         flourLine:'100% קמח מלא',
         price:145,
-        img:'מוצרים/כזיתות חיטה קמח חיטה מלא 1 ק״ג- מכירה 139.jpg'
+        img:'מוצרים/כזיתות חיטה קמח חיטה מלא 1 ק״ג- מכירה 139.jpg',
+        tranzilaIndex:2
       },
       {
         id:1,
@@ -2616,7 +2609,8 @@
         packageLine:'כ-14 מצות',
         flourLine:'100% קמח מלא',
         price:75,
-        img:'מוצרים/ כזיתות חיטה קמח חיטה מלא חצי ק״ג- מכירה 75.jpg'
+        img:'מוצרים/ כזיתות חיטה קמח חיטה מלא חצי ק״ג- מכירה 75.jpg',
+        tranzilaIndex:1
       },
       {
         id:6,
@@ -2626,7 +2620,8 @@
         packageLine:'מארז 1 קילו כ-5 מצות ',
         flourLine:'100% קמח מלא',
         price:95,
-        img:'מוצרים/מצות מבית אבא רכות ואיכותיות מכירה - 90.jpg'
+        img:'מוצרים/מצות מבית אבא רכות ואיכותיות מכירה - 90.jpg',
+        tranzilaIndex:6
       },
       {
         id:5,
@@ -2636,7 +2631,8 @@
         packageLine:'מארז 550 גרם 3-4 מצות',
         flourLine:'100% קמח כוסמין מלא',
         price:119,
-        img:'מוצרים/מצות לאפה מקמח כוסמין 550 גרם - מכירה 115.jpg'
+        img:'מוצרים/מצות לאפה מקמח כוסמין 550 גרם - מכירה 115.jpg',
+        tranzilaIndex:5
       },
       {
         id:13,
@@ -2646,7 +2642,8 @@
         packageLine:'מארז 1 ק״ג',
         flourLine:'100% קמח כוסמין מלא',
         price:174,
-        img:'מוצרים/ מכירה 165מצות כוסמין 1 קילו.png'
+        img:'מוצרים/ מכירה 165מצות כוסמין 1 קילו.png',
+        tranzilaIndex:13
       },
       {
         id:3,
@@ -2656,7 +2653,8 @@
         packageLine:'אריזת 550 גרם כ-14 מצות',
         flourLine:'100% קמח כוסמין מלא',
         price:135,
-        img:'מוצרים/כזיתות מקמח כוסמין 550 גרם מכירה - 135.jpg'
+        img:'מוצרים/כזיתות מקמח כוסמין 550 גרם מכירה - 135.jpg',
+        tranzilaIndex:3
       },
       {
         id:11,
@@ -2667,7 +2665,8 @@
         flourLine:'שיבולת שועל ללא גלוטן',
         imageBadge:'ללא גלוטן',
         price:149,
-        img:'מוצרים/מצות שיבולת שועל ללא גלוטן 400 גרם מכירה 149.jpg'
+        img:'מוצרים/מצות שיבולת שועל ללא גלוטן 400 גרם מכירה 149.jpg',
+        tranzilaIndex:11
       },
       {
         id:7,
@@ -2677,7 +2676,8 @@
         packageLine:'שמורה משעת קצירה',
         flourLine:'100% קמח מלא',
         price:85,
-        img:'מוצרים/מצות מכונה גאולתינו מבית אבהתנא שמורה 2 ק״ג  מכירה 85.jpg'
+        img:'מוצרים/מצות מכונה גאולתינו מבית אבהתנא שמורה 2 ק״ג  מכירה 85.jpg',
+        tranzilaIndex:7
       },
       {
         id:10,
@@ -2687,7 +2687,8 @@
         packageLine:'שמורה משעת קצירה',
         flourLine:'100% קמח מלא',
         price:50,
-        img:'מוצרים/מצות מכונה גאולתינו 1 ק״ג מכירה 50.jpg'
+        img:'מוצרים/מצות מכונה גאולתינו 1 ק״ג מכירה 50.jpg',
+        tranzilaIndex:10
       },
       {
         id:9,
@@ -2697,7 +2698,8 @@
         packageLine:'עבודת יד',
         flourLine:'כשר לפסח למהדרין מן המהדרין',
         price:110,
-        img:'מוצרים/מצות קשות ( פריכות ) ודקות אבהתנא 1 ק״ג מכירה 110.jpg'
+        img:'מוצרים/מצות קשות ( פריכות ) ודקות אבהתנא 1 ק״ג מכירה 110.jpg',
+        tranzilaIndex:9
       },
       {
         id:14,
@@ -2707,7 +2709,8 @@
         packageLine:'עבודת יד',
         flourLine:'',
         price:30,
-        img:'מוצרים/3מצות פריכות לליל הסדר מכירהכירה- 30.png'
+        img:'מוצרים/3מצות פריכות לליל הסדר מכירהכירה- 30.png',
+        tranzilaIndex:14
       },
       {
         id:12,
@@ -2717,7 +2720,8 @@
         packageLine:'מארז 500 גרם',
         flourLine:'קמח מצה שמורה',
         price:25,
-        img:'מוצרים/קמח מצה שמורה חצי ק״ג - מכירה 25.jpg'
+        img:'מוצרים/קמח מצה שמורה חצי ק״ג - מכירה 25.jpg',
+        tranzilaIndex:12
       }
     ];
 
@@ -2866,7 +2870,7 @@
     const cartEl = document.getElementById('cart');
     const overlay = document.getElementById('overlay');
     const paymentModal = document.getElementById('paymentModal');
-    const paymentGatewayModal = document.getElementById('paymentGatewayModal');
+    const embeddedPaymentPanel = document.getElementById('embeddedPaymentPanel');
     const paymentFrame = document.getElementById('paymentFrame');
     const paymentExternalLink = document.getElementById('paymentExternalLink');
     const checkoutForm = document.getElementById('checkoutForm');
@@ -2888,9 +2892,9 @@
     let cityRecords = [];
     let cityLookup = new Map();
 
-    // חיבור טרנזילה: טרמינל e4979.
-    const TRANZILA_SUPPLIER = 'e4979';
-    const TRANZILA_IFRAME_URL = 'https://directng.tranzila.com/e4979/iframenew.php';
+    // חיבור טרנזילה: iframe ישיר לטרמינל הפעיל.
+    const TRANZILA_TERMINAL = 'fxplehitey';
+    const TRANZILA_IFRAME_URL = `https://directng.tranzila.com/${TRANZILA_TERMINAL}/iframenew.php?lang=il`;
     let currentPaymentUrl = '';
 
     function normalizeText(value){
@@ -3196,7 +3200,7 @@
     }
 
     function syncBodyScrollLock(){
-      const hasModal = cartEl.classList.contains('open') || paymentModal.classList.contains('open') || paymentGatewayModal.classList.contains('open') || lightbox.classList.contains('open') || document.getElementById('termsModal').classList.contains('open');
+      const hasModal = cartEl.classList.contains('open') || paymentModal.classList.contains('open') || lightbox.classList.contains('open') || document.getElementById('termsModal').classList.contains('open');
       document.body.classList.toggle('modal-open',hasModal);
     }
 
@@ -3252,6 +3256,7 @@
       const shipping = getDeliveryFee();
       const total = productsTotal + shipping;
       const deliverySelected = isDeliverySelected();
+      const selectedRecord = getSelectedCityRecord();
       const orderItems = [...cart.entries()].map(([id,qty])=> {
         const product = products.find(p=>p.id === id);
         if(!product){
@@ -3281,8 +3286,23 @@
         total,
         orderSummary: getCartLineItemsSummary(),
         orderItems,
-        orderReference: `ABH-${Date.now()}`
+        orderReference: `ABH-${Date.now()}`,
+        locationLabel: selectedRecord ? getRecordCityName(selectedRecord) : '',
+        locationSubdistrict: selectedRecord ? getRecordSubdistrict(selectedRecord) : '',
+        deliveryAddressLine: deliverySelected ? `${normalizeText(checkoutForm.elements.deliveryStreet.value)} ${normalizeText(checkoutForm.elements.deliveryHouseNumber.value)}`.trim() : 'איסוף עצמי',
+        purchaseData: orderItems.map(item=>({
+          product_name: [item.brand, item.name].filter(Boolean).join(' - '),
+          product_quantity: item.quantity || 1,
+          product_price: Number((parseFloat(item.unitPrice) || 0).toFixed(2))
+        }))
       };
+    }
+
+    function getTranzilaProducts(){
+      return products.map(product=>({
+        index: Number.isFinite(product.tranzilaIndex) ? product.tranzilaIndex : product.id,
+        name: [product.displayBrand, product.name].filter(Boolean).join(' - ')
+      }));
     }
 
     function buildTranzilaIframeUrl(payload){
@@ -3290,60 +3310,62 @@
         return '';
       }
 
-      const [firstName = payload.fullName] = payload.fullName.split(' ').filter(Boolean);
-      const deliveryAddress = payload.deliveryType === 'משלוח'
-        ? `${payload.deliveryStreet} ${payload.deliveryHouseNumber}`.trim()
-        : 'איסוף עצמי';
+      const url = new URL(TRANZILA_IFRAME_URL);
+      const availableTranzilaProducts = getTranzilaProducts();
+      const productsById = new Map(products.map(product=>[product.id, product]));
+      const quantitiesByIndex = payload.orderItems.reduce((acc,item)=>{
+        const sourceProduct = productsById.get(item.id);
+        const tranzilaProductIndex = Number.isFinite(sourceProduct?.tranzilaIndex) ? sourceProduct.tranzilaIndex : item.id;
+        if(Number.isFinite(tranzilaProductIndex)){
+          acc[tranzilaProductIndex] = (acc[tranzilaProductIndex] || 0) + (item.quantity || 1);
+        }
+        return acc;
+      },{});
       const orderDescription = [
         `סוג הזמנה: ${payload.deliveryType}`,
         `פריטים: ${payload.orderSummary || 'לא צוינו פריטים'}`,
         `עלות מוצרים: ${formatShekelAmount(payload.productsTotal)}`,
         `עלות משלוח: ${formatShekelAmount(payload.shippingCost)}`,
-        `כתובת: ${payload.deliveryCity || '-'} ${deliveryAddress}`
+        `כתובת: ${(payload.deliveryCity || '')} ${(payload.deliveryAddressLine || '')}`.trim() || 'איסוף עצמי'
       ].join(' | ');
 
-      const encodedOrderItems = JSON.stringify(payload.orderItems);
-      const params = new URLSearchParams({
-        // שדות לפי הנחיות Tranzila ל-iframenew.
-        supplier: TRANZILA_SUPPLIER,
-        sum: String(payload.total),
-        currency: '1',
-        tranmode: 'A',
-        lang: 'il',
-        company: 'מצות אבהתנא',
-        contact: payload.fullName,
-        order_id: payload.orderReference,
-        order_ref: payload.orderReference,
-        first_name: firstName,
-        email: payload.email,
-        phone: payload.phone,
-        country: 'ישראל',
-        zip: '0000000',
-        city: payload.deliveryCity,
-        address: deliveryAddress,
-        house: payload.deliveryHouseNumber,
-        shipping: String(payload.shippingCost),
-        pdesc: orderDescription,
-        comments: orderDescription,
-        // שדות עזר לקידוד ברור בעברית בקבלה/מערכות צד-שרת:
-        customer_name_he: payload.fullName,
-        customer_first_name_he: firstName,
-        customer_email: payload.email,
-        order_currency_he: 'ש"ח',
-        delivery_city_he: payload.deliveryCity,
-        delivery_street_he: payload.deliveryStreet,
-        delivery_house_number: payload.deliveryHouseNumber,
-        delivery_full_address_he: `${payload.deliveryCity} ${deliveryAddress}`.trim(),
-        delivery_phone: payload.phone,
-        shipping_cost: String(payload.shippingCost),
-        order_items_he: payload.orderSummary,
-        order_items_json: encodedOrderItems,
-        products_total: String(payload.productsTotal),
-        total_to_charge: String(payload.total)
+      url.searchParams.set('sum', payload.total.toFixed(2));
+      url.searchParams.set('currency', '1');
+      url.searchParams.set('lang', 'il');
+      url.searchParams.set('tranmode', 'A');
+      url.searchParams.set('company', 'מצות אבהתנא');
+      url.searchParams.set('contact', payload.fullName);
+      url.searchParams.set('email', payload.email);
+      url.searchParams.set('phone', payload.phone || '');
+      url.searchParams.set('city', payload.deliveryCity || '');
+      url.searchParams.set('address', payload.deliveryAddressLine || 'איסוף עצמי');
+      url.searchParams.set('shipping', String(payload.shippingCost));
+      url.searchParams.set('pdesc', orderDescription);
+      url.searchParams.set('comments', orderDescription);
+      url.searchParams.set('order_id', payload.orderReference);
+      url.searchParams.set('order_ref', payload.orderReference);
+      url.searchParams.set('custom_delivery_type', payload.deliveryType);
+      url.searchParams.set('custom_delivery_city', payload.locationLabel || payload.deliveryCity || '');
+      url.searchParams.set('custom_delivery_subdistrict', payload.locationSubdistrict || '');
+      url.searchParams.set('custom_delivery_street', payload.deliveryStreet || '');
+      url.searchParams.set('custom_delivery_house', payload.deliveryHouseNumber || '');
+      url.searchParams.set('custom_delivery_phone', payload.phone || '');
+      url.searchParams.set('custom_shipping_cost', String(payload.shippingCost));
+      url.searchParams.set('custom_products_total', String(payload.productsTotal));
+      url.searchParams.set('custom_order_items', payload.orderSummary || '');
+      url.searchParams.set('custom_order_items_json', JSON.stringify(payload.orderItems));
+
+      if(payload.purchaseData.length){
+        url.searchParams.set('json_purchase_data', JSON.stringify(payload.purchaseData));
+      }
+
+      availableTranzilaProducts.forEach(product=>{
+        const quantity = quantitiesByIndex[product.index] || 0;
+        url.searchParams.set(`prod${product.index}`, product.name);
+        url.searchParams.set(`quant${product.index}`, String(quantity));
       });
 
-      const separator = TRANZILA_IFRAME_URL.includes('?') ? '&' : '?';
-      return `${TRANZILA_IFRAME_URL}${separator}${params.toString()}`;
+      return url.toString();
     }
 
     function buildPaymentFallbackSrcdoc(payload){
@@ -3354,9 +3376,11 @@
       return `<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><style>body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,#f8f4ea,#f2e7d4);padding:20px;color:#3b2d1c}section{background:#fff;border:1px solid #d9c4a8;border-radius:16px;padding:20px;max-width:760px;margin:0 auto;box-shadow:0 14px 30px rgba(0,0,0,.12)}h2{margin:0 0 10px}p{margin:8px 0;line-height:1.6}ul{margin:8px 0 0;padding-inline-start:20px}li{margin:6px 0}code{background:#f3ecdf;padding:2px 6px;border-radius:6px}</style></head><body><section><h2>חיבור טרנזילה מוכן להגדרה</h2><p>האייפריים משמש כאן רק כגיבוי למקרה שקישור הסליקה לא זמין.</p><p><strong>סכום לתשלום:</strong> ${payload.total} ₪ (מוצרים: ${payload.productsTotal} ₪, משלוח: ${payload.shippingCost} ₪)</p><p><strong>לקוח:</strong> ${payload.fullName} | ${payload.email}</p><p><strong>כתובת/אופן קבלה:</strong> ${addressLine}</p><p><strong>טלפון למשלוח:</strong> ${payload.phone || 'לא רלוונטי'}</p><p><strong>פריטים:</strong> ${payload.orderSummary || 'לא נבחרו מוצרים'}</p><hr><p style="margin-bottom:0"><strong>שדות שמוכנים להעברה לטרנזילה (בעברית):</strong></p><ul><li>סכום כולל לתשלום + פירוט עלות משלוח.</li><li>שם מלא ומייל לקוח.</li><li>בסוג משלוח: עיר, רחוב, מספר בית וטלפון.</li><li>פירוט פריטים להזמנה כדי שיופיע בקבלה.</li></ul></section></body></html>`;
     }
 
-    function setPaymentGatewayState(isOpen){
-      paymentGatewayModal.classList.toggle('open',isOpen);
-      paymentGatewayModal.setAttribute('aria-hidden', String(!isOpen));
+    function setEmbeddedPaymentState(isOpen){
+      embeddedPaymentPanel.hidden = !isOpen;
+      if(isOpen){
+        embeddedPaymentPanel.scrollIntoView({behavior:'smooth',block:'start'});
+      }
       syncBodyScrollLock();
     }
 
@@ -3373,13 +3397,13 @@
       if(tranzilaUrl){
         paymentFrame.srcdoc = '';
         paymentFrame.src = tranzilaUrl;
-        setPaymentGatewayState(true);
+        setEmbeddedPaymentState(true);
         return true;
       }
 
       paymentFrame.src = 'about:blank';
       paymentFrame.srcdoc = buildPaymentFallbackSrcdoc(payload);
-      setPaymentGatewayState(true);
+      setEmbeddedPaymentState(true);
       return false;
     }
 
@@ -3737,7 +3761,7 @@
     function closePaymentFlow(){
       paymentModal.classList.remove('open');
       paymentModal.setAttribute('aria-hidden','true');
-      setPaymentGatewayState(false);
+      setEmbeddedPaymentState(false);
       paymentFrame.src = 'about:blank';
       paymentFrame.srcdoc = '';
       currentPaymentUrl = '';
@@ -3751,22 +3775,16 @@
       checkoutForm.hidden = false;
       updateCheckoutSummary();
       closeCart();
-      setPaymentGatewayState(false);
+      setEmbeddedPaymentState(false);
       syncBodyScrollLock();
     });
 
     document.getElementById('closePayment').addEventListener('click',closePaymentFlow);
-    document.getElementById('closePaymentGateway').addEventListener('click',()=>setPaymentGatewayState(false));
+    document.getElementById('closeEmbeddedPayment').addEventListener('click',()=>setEmbeddedPaymentState(false));
 
     paymentModal.addEventListener('click',e=>{
       if(e.target === paymentModal){
         closePaymentFlow();
-      }
-    });
-
-    paymentGatewayModal.addEventListener('click',e=>{
-      if(e.target === paymentGatewayModal){
-        setPaymentGatewayState(false);
       }
     });
 
