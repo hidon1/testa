@@ -1592,41 +1592,12 @@
       gap:10px;
     }
 
-    .embeddedPaymentHead{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:14px;
-      color:#3b2d1c;
-    }
-
-    .embeddedPaymentHead strong{
-      display:block;
-      font-size:1.15rem;
-      margin-bottom:4px;
-    }
-
     .embeddedPaymentPanel{
       background:#fff;
       border-radius:22px;
       border:1px solid rgba(97,59,20,.18);
       box-shadow:0 16px 34px rgba(0,0,0,.16);
-      padding:18px;
-      display:grid;
-      gap:12px;
-    }
-
-    .embeddedPaymentHead p{
-      margin:0;
-      color:#5f4c37;
-      line-height:1.6;
-    }
-
-    .paymentGatewayActions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
+      padding:0;
     }
 
     .checkoutFormCard{
@@ -1723,53 +1694,6 @@
       border-radius:22px;
       box-shadow:0 20px 44px rgba(0,0,0,.22);
       background:#fff;
-    }
-
-    .paymentLinkNote{
-      margin:0;
-      font-size:.95rem;
-      color:#5f4c37;
-    }
-
-    .iframeOverlay{
-      position:fixed;
-      inset:0;
-      background:#1a1006;
-      display:none;
-      flex-direction:column;
-      z-index:1600;
-    }
-
-    .iframeOverlay.open{display:flex}
-
-    .iframeOverlayHead{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:10px 18px;
-      background:#3b2d1c;
-      color:#fff;
-      gap:10px;
-      flex-shrink:0;
-    }
-
-    .iframeOverlayHead strong{
-      font-size:1.05rem;
-    }
-
-    .iframeOverlayActions{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .iframeOverlayFrame{
-      flex:1;
-      border:none;
-      width:100%;
-      min-height:0;
-      display:block;
     }
 
     .termsCard{
@@ -2039,9 +1963,6 @@
       .paymentCard{width:min(1180px,100%);margin:auto 0;max-height:calc(100vh - 20px)}
       .checkoutFormCard{max-height:calc(100vh - 120px)}
       .paymentFrame{min-height:78vh;height:min(88vh,1200px)}
-      .embeddedPaymentHead{flex-direction:column;align-items:stretch}
-      .paymentGatewayActions{justify-content:stretch}
-      .paymentGatewayActions > *{width:100%}
       .reveal,
       .revealLong{
         opacity:1;
@@ -2553,19 +2474,6 @@
       </form>
 
       <div class="embeddedPaymentPanel" id="embeddedPaymentPanel" hidden>
-        <div class="embeddedPaymentHead">
-          <div>
-            <strong>סליקה באתר עצמו</strong>
-            <p>חלון הסליקה נטען כאן בתוך האתר, במקביל לפרטי ההזמנה שהלקוח מילא.</p>
-          </div>
-          <div class="paymentGatewayActions">
-            <a class="btn alt" id="paymentExternalLink" href="#" target="_blank" rel="noopener noreferrer">פתיחת הסליקה בחלון נפרד</a>
-            <button class="btn alt" type="button" id="closeEmbeddedPayment">סגירת חלון הסליקה</button>
-          </div>
-        </div>
-
-        <p class="paymentLinkNote">כל פרטי ההזמנה, כולל כתובת, מיקום עיר, עלות משלוח ופירוט המוצרים, נשלחים ללינק הסליקה. אם ספק הסליקה חוסם טעינה בתוך iframe, אפשר להשתמש גם בקישור הישיר.</p>
-
         <iframe
           class="paymentFrame"
           id="paymentFrame"
@@ -2575,22 +2483,6 @@
       </div>
 
     </div>
-  </div>
-
-  <div class="iframeOverlay" id="iframeOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="סליקה מאובטחת">
-    <div class="iframeOverlayHead">
-      <strong>סליקה מאובטחת</strong>
-      <div class="iframeOverlayActions">
-        <a class="btn alt" id="iframeExternalLink" href="#" target="_blank" rel="noopener noreferrer">פתיחה בחלון נפרד</a>
-        <button class="btn alt" type="button" id="closeIframeOverlay">סגור</button>
-      </div>
-    </div>
-    <iframe
-      class="iframeOverlayFrame"
-      id="iframeOverlayFrame"
-      title="מערכת סליקה"
-      src="about:blank">
-    </iframe>
   </div>
 
   <div class="termsModal" id="termsModal" aria-hidden="true">
@@ -2929,7 +2821,6 @@
     const paymentModal = document.getElementById('paymentModal');
     const embeddedPaymentPanel = document.getElementById('embeddedPaymentPanel');
     const paymentFrame = document.getElementById('paymentFrame');
-    const paymentExternalLink = document.getElementById('paymentExternalLink');
     const checkoutForm = document.getElementById('checkoutForm');
     const checkoutSummary = document.getElementById('checkoutSummary');
     const deliveryFields = document.getElementById('deliveryFields');
@@ -2941,9 +2832,6 @@
     const lightbox = document.getElementById('lightbox');
     const lightboxMedia = document.getElementById('lightboxMedia');
     const heroRabbiImg = document.getElementById('heroRabbiImg');
-    const iframeOverlay = document.getElementById('iframeOverlay');
-    const iframeOverlayFrame = document.getElementById('iframeOverlayFrame');
-    const iframeExternalLink = document.getElementById('iframeExternalLink');
 
     const cart = new Map();
     let lightboxIndex = 0;
@@ -3260,7 +3148,7 @@
     }
 
     function syncBodyScrollLock(){
-      const hasModal = cartEl.classList.contains('open') || paymentModal.classList.contains('open') || lightbox.classList.contains('open') || document.getElementById('termsModal').classList.contains('open') || iframeOverlay.classList.contains('open');
+      const hasModal = cartEl.classList.contains('open') || paymentModal.classList.contains('open') || lightbox.classList.contains('open') || document.getElementById('termsModal').classList.contains('open');
       document.body.classList.toggle('modal-open',hasModal);
     }
 
@@ -3444,56 +3332,25 @@
       syncBodyScrollLock();
     }
 
-    function openIframeOverlay(url, srcdoc){
-      iframeExternalLink.href = url || '#';
-      iframeExternalLink.style.pointerEvents = url ? 'auto' : 'none';
-      iframeExternalLink.style.opacity = url ? '1' : '.6';
-      iframeExternalLink.toggleAttribute('aria-disabled', !url);
-      if(srcdoc){
-        iframeOverlayFrame.src = 'about:blank';
-        iframeOverlayFrame.srcdoc = srcdoc;
-      } else {
-        iframeOverlayFrame.srcdoc = '';
-        iframeOverlayFrame.src = url || 'about:blank';
-      }
-      iframeOverlay.classList.add('open');
-      iframeOverlay.setAttribute('aria-hidden','false');
-      syncBodyScrollLock();
-    }
-
-    function closeIframeOverlay(){
-      iframeOverlay.classList.remove('open');
-      iframeOverlay.setAttribute('aria-hidden','true');
-      iframeOverlayFrame.src = 'about:blank';
-      iframeOverlayFrame.srcdoc = '';
-      iframeExternalLink.href = '#';
-      syncBodyScrollLock();
-    }
-
     function renderPaymentFrame(){
       const payload = buildOrderPayload();
       const tranzilaUrl = buildTranzilaIframeUrl(payload);
 
       currentPaymentUrl = tranzilaUrl;
-      paymentExternalLink.href = tranzilaUrl || 'about:blank';
-      paymentExternalLink.toggleAttribute('aria-disabled', !tranzilaUrl);
-      paymentExternalLink.style.pointerEvents = tranzilaUrl ? 'auto' : 'none';
-      paymentExternalLink.style.opacity = tranzilaUrl ? '1' : '.6';
 
       if(tranzilaUrl){
         paymentFrame.srcdoc = '';
         paymentFrame.src = tranzilaUrl;
-        setEmbeddedPaymentState(true);
-        openIframeOverlay(tranzilaUrl);
-        return true;
+      } else {
+        const fallbackDoc = buildPaymentFallbackSrcdoc(payload);
+        paymentFrame.src = 'about:blank';
+        paymentFrame.srcdoc = fallbackDoc;
       }
 
-      const fallbackDoc = buildPaymentFallbackSrcdoc(payload);
-      paymentFrame.src = 'about:blank';
-      paymentFrame.srcdoc = fallbackDoc;
+      checkoutForm.hidden = true;
+      checkoutForm.setAttribute('aria-hidden','true');
       setEmbeddedPaymentState(true);
-      openIframeOverlay('', fallbackDoc);
-      return false;
+      return !!tranzilaUrl;
     }
 
     function renderCart(){
@@ -3851,11 +3708,11 @@
       paymentModal.classList.remove('open');
       paymentModal.setAttribute('aria-hidden','true');
       setEmbeddedPaymentState(false);
+      checkoutForm.hidden = false;
+      checkoutForm.setAttribute('aria-hidden','false');
       paymentFrame.src = 'about:blank';
       paymentFrame.srcdoc = '';
       currentPaymentUrl = '';
-      paymentExternalLink.href = '#';
-      closeIframeOverlay();
       syncBodyScrollLock();
     }
 
@@ -3870,8 +3727,6 @@
     });
 
     document.getElementById('closePayment').addEventListener('click',closePaymentFlow);
-    document.getElementById('closeEmbeddedPayment').addEventListener('click',()=>setEmbeddedPaymentState(false));
-    document.getElementById('closeIframeOverlay').addEventListener('click',closeIframeOverlay);
 
     paymentModal.addEventListener('click',e=>{
       if(e.target === paymentModal){
@@ -3918,9 +3773,7 @@
     });
 
     document.addEventListener('keydown',e=>{
-      if(iframeOverlay.classList.contains('open') && e.key === 'Escape'){
-        closeIframeOverlay();
-      } else if(lightbox.classList.contains('open')){
+      if(lightbox.classList.contains('open')){
         if(e.key === 'Escape') closeLightbox();
         if(e.key === 'ArrowRight') moveLightbox(-1);
         if(e.key === 'ArrowLeft') moveLightbox(1);
