@@ -1556,6 +1556,7 @@
     .overlay.open{display:block}
 
     .paymentModal,
+    .paymentGatewayModal,
     .termsModal{
       position:fixed;
       inset:0;
@@ -1569,6 +1570,7 @@
     }
 
     .paymentModal.open,
+    .paymentGatewayModal.open,
     .termsModal.open{display:flex}
 
     .paymentCard{
@@ -1579,12 +1581,58 @@
       overflow:hidden;
     }
 
+    .paymentGatewayModal{
+      z-index:1400;
+      background:rgba(15,10,5,.82);
+      backdrop-filter:blur(4px);
+    }
+
+    .paymentGatewayCard{
+      width:min(1180px,98vw);
+      display:grid;
+      gap:12px;
+      max-height:96vh;
+      padding:18px;
+      background:linear-gradient(180deg,#fffdf8,#f8f1e4);
+      border-radius:26px;
+      border:1px solid rgba(94,59,17,.2);
+      box-shadow:0 24px 60px rgba(0,0,0,.38);
+      overflow:hidden;
+    }
+
     .paymentHead{
       display:flex;
       justify-content:space-between;
       align-items:center;
       color:#fff;
       gap:10px;
+    }
+
+    .paymentGatewayHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:14px;
+      color:#3b2d1c;
+    }
+
+    .paymentGatewayHead strong{
+      display:block;
+      font-size:1.15rem;
+      margin-bottom:4px;
+    }
+
+    .paymentGatewayHead p{
+      margin:0;
+      color:#5f4c37;
+      line-height:1.6;
+    }
+
+    .paymentGatewayActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
     .checkoutFormCard{
@@ -1674,12 +1722,19 @@
     }
 
     .paymentFrame{
-      width:min(920px,95vw);
-      height:min(620px,86vh);
+      width:100%;
+      height:min(82vh,1100px);
+      min-height:720px;
       border:none;
-      border-radius:18px;
-      box-shadow:0 20px 44px rgba(0,0,0,.35);
+      border-radius:22px;
+      box-shadow:0 20px 44px rgba(0,0,0,.22);
       background:#fff;
+    }
+
+    .paymentLinkNote{
+      margin:0;
+      font-size:.95rem;
+      color:#5f4c37;
     }
 
     .termsCard{
@@ -1945,9 +2000,15 @@
       .productTagline{font-size:.78rem;line-height:1.2}
       .productFlour{font-size:.8rem;line-height:1.2}
       .price{font-size:1rem}
-      .paymentModal{align-items:flex-start}
-      .paymentCard{width:min(920px,100%);margin:auto 0;max-height:calc(100vh - 20px)}
+      .paymentModal,
+      .paymentGatewayModal{align-items:flex-start}
+      .paymentCard,
+      .paymentGatewayCard{width:min(1180px,100%);margin:auto 0;max-height:calc(100vh - 20px)}
       .checkoutFormCard{max-height:calc(100vh - 120px)}
+      .paymentFrame{min-height:78vh;height:min(88vh,1200px)}
+      .paymentGatewayHead{flex-direction:column;align-items:stretch}
+      .paymentGatewayActions{justify-content:stretch}
+      .paymentGatewayActions > *{width:100%}
       .reveal,
       .revealLong{
         opacity:1;
@@ -2458,10 +2519,27 @@
         <button class="btn" type="submit">המשך לרכישה</button>
       </form>
 
+    </div>
+  </div>
+
+  <div class="paymentGatewayModal" id="paymentGatewayModal" aria-hidden="true">
+    <div class="paymentGatewayCard">
+      <div class="paymentGatewayHead">
+        <div>
+          <strong>חלון סליקה מוגדל</strong>
+          <p>הסליקה נפתחת מעל חלון הפרטים כדי לאפשר מעבר חלק, עם אייפריים גבוה במיוחד וקישור עצמאי לגיבוי.</p>
+        </div>
+        <div class="paymentGatewayActions">
+          <a class="btn alt" id="paymentExternalLink" href="#" target="_blank" rel="noopener noreferrer">פתיחת הסליקה בחלון נפרד</a>
+          <button class="btn" type="button" id="closePaymentGateway">חזרה לפרטי ההזמנה</button>
+        </div>
+      </div>
+
+      <p class="paymentLinkNote">אם חברת הסליקה חוסמת טעינה בתוך האתר, אפשר להשתמש בקישור הישיר והוא יעבוד כעמוד עצמאי.</p>
+
       <iframe
         class="paymentFrame"
         id="paymentFrame"
-        hidden
         title="מערכת סליקה"
         src="about:blank">
       </iframe>
@@ -2788,7 +2866,9 @@
     const cartEl = document.getElementById('cart');
     const overlay = document.getElementById('overlay');
     const paymentModal = document.getElementById('paymentModal');
+    const paymentGatewayModal = document.getElementById('paymentGatewayModal');
     const paymentFrame = document.getElementById('paymentFrame');
+    const paymentExternalLink = document.getElementById('paymentExternalLink');
     const checkoutForm = document.getElementById('checkoutForm');
     const checkoutSummary = document.getElementById('checkoutSummary');
     const deliveryFields = document.getElementById('deliveryFields');
@@ -2811,6 +2891,7 @@
     // חיבור טרנזילה: טרמינל e4979.
     const TRANZILA_SUPPLIER = 'e4979';
     const TRANZILA_IFRAME_URL = 'https://directng.tranzila.com/e4979/iframenew.php';
+    let currentPaymentUrl = '';
 
     function normalizeText(value){
       return String(value || '').trim().replace(/\s+/g,' ');
@@ -3115,7 +3196,7 @@
     }
 
     function syncBodyScrollLock(){
-      const hasModal = cartEl.classList.contains('open') || paymentModal.classList.contains('open') || lightbox.classList.contains('open') || document.getElementById('termsModal').classList.contains('open');
+      const hasModal = cartEl.classList.contains('open') || paymentModal.classList.contains('open') || paymentGatewayModal.classList.contains('open') || lightbox.classList.contains('open') || document.getElementById('termsModal').classList.contains('open');
       document.body.classList.toggle('modal-open',hasModal);
     }
 
@@ -3171,6 +3252,21 @@
       const shipping = getDeliveryFee();
       const total = productsTotal + shipping;
       const deliverySelected = isDeliverySelected();
+      const orderItems = [...cart.entries()].map(([id,qty])=> {
+        const product = products.find(p=>p.id === id);
+        if(!product){
+          return null;
+        }
+        return {
+          id,
+          sku: product.sku || '',
+          brand: product.displayBrand,
+          name: product.name,
+          quantity: qty,
+          unitPrice: product.price,
+          lineTotal: product.price * qty
+        };
+      }).filter(Boolean);
 
       return {
         fullName: normalizeText(checkoutForm.elements.fullName.value),
@@ -3183,7 +3279,9 @@
         shippingCost: shipping,
         productsTotal,
         total,
-        orderSummary: getCartLineItemsSummary()
+        orderSummary: getCartLineItemsSummary(),
+        orderItems,
+        orderReference: `ABH-${Date.now()}`
       };
     }
 
@@ -3204,6 +3302,7 @@
         `כתובת: ${payload.deliveryCity || '-'} ${deliveryAddress}`
       ].join(' | ');
 
+      const encodedOrderItems = JSON.stringify(payload.orderItems);
       const params = new URLSearchParams({
         // שדות לפי הנחיות Tranzila ל-iframenew.
         supplier: TRANZILA_SUPPLIER,
@@ -3213,6 +3312,8 @@
         lang: 'il',
         company: 'מצות אבהתנא',
         contact: payload.fullName,
+        order_id: payload.orderReference,
+        order_ref: payload.orderReference,
         first_name: firstName,
         email: payload.email,
         phone: payload.phone,
@@ -3236,7 +3337,9 @@
         delivery_phone: payload.phone,
         shipping_cost: String(payload.shippingCost),
         order_items_he: payload.orderSummary,
-        products_total: String(payload.productsTotal)
+        order_items_json: encodedOrderItems,
+        products_total: String(payload.productsTotal),
+        total_to_charge: String(payload.total)
       });
 
       const separator = TRANZILA_IFRAME_URL.includes('?') ? '&' : '?';
@@ -3251,22 +3354,32 @@
       return `<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><style>body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,#f8f4ea,#f2e7d4);padding:20px;color:#3b2d1c}section{background:#fff;border:1px solid #d9c4a8;border-radius:16px;padding:20px;max-width:760px;margin:0 auto;box-shadow:0 14px 30px rgba(0,0,0,.12)}h2{margin:0 0 10px}p{margin:8px 0;line-height:1.6}ul{margin:8px 0 0;padding-inline-start:20px}li{margin:6px 0}code{background:#f3ecdf;padding:2px 6px;border-radius:6px}</style></head><body><section><h2>חיבור טרנזילה מוכן להגדרה</h2><p>האייפריים משמש כאן רק כגיבוי למקרה שקישור הסליקה לא זמין.</p><p><strong>סכום לתשלום:</strong> ${payload.total} ₪ (מוצרים: ${payload.productsTotal} ₪, משלוח: ${payload.shippingCost} ₪)</p><p><strong>לקוח:</strong> ${payload.fullName} | ${payload.email}</p><p><strong>כתובת/אופן קבלה:</strong> ${addressLine}</p><p><strong>טלפון למשלוח:</strong> ${payload.phone || 'לא רלוונטי'}</p><p><strong>פריטים:</strong> ${payload.orderSummary || 'לא נבחרו מוצרים'}</p><hr><p style="margin-bottom:0"><strong>שדות שמוכנים להעברה לטרנזילה (בעברית):</strong></p><ul><li>סכום כולל לתשלום + פירוט עלות משלוח.</li><li>שם מלא ומייל לקוח.</li><li>בסוג משלוח: עיר, רחוב, מספר בית וטלפון.</li><li>פירוט פריטים להזמנה כדי שיופיע בקבלה.</li></ul></section></body></html>`;
     }
 
+    function setPaymentGatewayState(isOpen){
+      paymentGatewayModal.classList.toggle('open',isOpen);
+      paymentGatewayModal.setAttribute('aria-hidden', String(!isOpen));
+      syncBodyScrollLock();
+    }
+
     function renderPaymentFrame(){
       const payload = buildOrderPayload();
       const tranzilaUrl = buildTranzilaIframeUrl(payload);
 
+      currentPaymentUrl = tranzilaUrl;
+      paymentExternalLink.href = tranzilaUrl || 'about:blank';
+      paymentExternalLink.toggleAttribute('aria-disabled', !tranzilaUrl);
+      paymentExternalLink.style.pointerEvents = tranzilaUrl ? 'auto' : 'none';
+      paymentExternalLink.style.opacity = tranzilaUrl ? '1' : '.6';
+
       if(tranzilaUrl){
-        const popup = window.open(tranzilaUrl,'_blank','noopener,noreferrer');
-        if(!popup){
-          window.location.href = tranzilaUrl;
-        }
         paymentFrame.srcdoc = '';
         paymentFrame.src = tranzilaUrl;
+        setPaymentGatewayState(true);
         return true;
       }
 
       paymentFrame.src = 'about:blank';
       paymentFrame.srcdoc = buildPaymentFallbackSrcdoc(payload);
+      setPaymentGatewayState(true);
       return false;
     }
 
@@ -3621,24 +3734,39 @@
     document.getElementById('closeCart').addEventListener('click',closeCart);
     overlay.addEventListener('click',closeCart);
 
+    function closePaymentFlow(){
+      paymentModal.classList.remove('open');
+      paymentModal.setAttribute('aria-hidden','true');
+      setPaymentGatewayState(false);
+      paymentFrame.src = 'about:blank';
+      paymentFrame.srcdoc = '';
+      currentPaymentUrl = '';
+      paymentExternalLink.href = '#';
+      syncBodyScrollLock();
+    }
+
     document.getElementById('openPaymentInCart').addEventListener('click',()=>{
       paymentModal.classList.add('open');
-      paymentFrame.hidden = true;
+      paymentModal.setAttribute('aria-hidden','false');
       checkoutForm.hidden = false;
       updateCheckoutSummary();
       closeCart();
+      setPaymentGatewayState(false);
       syncBodyScrollLock();
     });
 
-    document.getElementById('closePayment').addEventListener('click',()=>{
-      paymentModal.classList.remove('open');
-      syncBodyScrollLock();
-    });
+    document.getElementById('closePayment').addEventListener('click',closePaymentFlow);
+    document.getElementById('closePaymentGateway').addEventListener('click',()=>setPaymentGatewayState(false));
 
     paymentModal.addEventListener('click',e=>{
       if(e.target === paymentModal){
-        paymentModal.classList.remove('open');
-        syncBodyScrollLock();
+        closePaymentFlow();
+      }
+    });
+
+    paymentGatewayModal.addEventListener('click',e=>{
+      if(e.target === paymentGatewayModal){
+        setPaymentGatewayState(false);
       }
     });
 
@@ -3669,13 +3797,7 @@
         updateCheckoutSubmitState();
         return;
       }
-      const openedTranzila = renderPaymentFrame();
-      paymentFrame.hidden = openedTranzila;
-      checkoutForm.hidden = openedTranzila;
-      if(!openedTranzila){
-        paymentFrame.hidden = false;
-        checkoutForm.hidden = true;
-      }
+      renderPaymentFrame();
     });
 
     document.getElementById('lightboxClose').addEventListener('click',closeLightbox);
