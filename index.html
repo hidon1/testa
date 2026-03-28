@@ -7,16 +7,18 @@
   <meta name="description" content="חדשות הציבור - אתר חדשות המתעדכן מקובץ JSON" />
   <style>
     :root{
-      --bg:#0f1117;
+      --bg:#090b14;
       --bg-soft:#151a24;
       --card:#1b2230;
       --card-2:#20293a;
       --text:#f4f7fb;
       --muted:#adb7c7;
       --line:rgba(255,255,255,0.08);
-      --gold:#d8b66c;
-      --gold-strong:#f3d793;
-      --accent:#8db2ff;
+      --gold:#ffb703;
+      --gold-strong:#ffd166;
+      --accent:#7bdff2;
+      --accent-hot:#ff4d8d;
+      --accent-lime:#9cff57;
       --radius:24px;
       --shadow:0 14px 45px rgba(0,0,0,0.33);
       --max:1380px;
@@ -83,14 +85,19 @@
       border-radius:18px;
       display:grid;
       place-items:center;
-      font-size:28px;
+      font-size:30px;
       font-weight:800;
-      color:var(--gold-strong);
+      color:#100522;
       background:
-        linear-gradient(135deg, rgba(243,215,147,0.16), rgba(141,178,255,0.12)),
-        #161b25;
-      border:1px solid rgba(255,255,255,0.08);
-      box-shadow:var(--shadow);
+        conic-gradient(from 210deg, #ff4d8d, #ffd166, #9cff57, #7bdff2, #ff4d8d);
+      border:1px solid rgba(255,255,255,0.18);
+      box-shadow:0 10px 30px rgba(255,77,141,0.35), 0 0 0 2px rgba(255,255,255,0.08) inset;
+      transform:rotate(-8deg);
+      animation:logoPulse 4s ease-in-out infinite;
+    }
+    @keyframes logoPulse{
+      0%,100%{ transform:rotate(-8deg) scale(1); filter:saturate(1); }
+      50%{ transform:rotate(-3deg) scale(1.06); filter:saturate(1.2); }
     }
 
     .brand h1{
@@ -129,35 +136,49 @@
 
     .ticker-wrap{
       border-bottom:1px solid var(--line);
-      background:#111624;
+      background:transparent;
       overflow:hidden;
+      padding:14px 0 8px;
     }
 
     .ticker{
-      min-height:48px;
+      min-height:58px;
       display:flex;
       align-items:center;
       gap:20px;
       white-space:nowrap;
+      border-radius:16px;
+      padding:10px 16px;
+      border:1px solid rgba(255,255,255,0.12);
+      background:linear-gradient(135deg, rgba(255,77,141,0.14), rgba(123,223,242,0.15) 48%, rgba(156,255,87,0.14));
+      box-shadow:0 10px 30px rgba(0,0,0,0.2);
     }
 
     .ticker-label{
-      color:var(--gold-strong);
+      color:#ffffff;
       font-weight:700;
       flex:0 0 auto;
+      background:rgba(0,0,0,0.32);
+      border:1px solid rgba(255,255,255,0.12);
+      padding:8px 12px;
+      border-radius:999px;
     }
 
     .ticker-track{
       display:flex;
-      gap:36px;
-      animation:ticker 35s linear infinite;
+      gap:24px;
+      animation:ticker 28s linear infinite;
       will-change:transform;
     }
 
     .ticker-item{
-      color:#dce4ef;
+      color:#f8fbff;
       font-size:14px;
-      opacity:.95;
+      opacity:.98;
+      background:rgba(0,0,0,0.30);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:999px;
+      padding:7px 12px;
     }
 
     @keyframes ticker{
@@ -262,7 +283,10 @@
       margin-top:22px;
       padding:13px 18px;
       border-radius:14px;
-      background:linear-gradient(135deg, var(--gold), var(--gold-strong));
+      border:none;
+      cursor:pointer;
+      font-size:15px;
+      background:linear-gradient(135deg, var(--accent-hot), var(--gold-strong));
       color:#171717;
       font-weight:800;
     }
@@ -422,8 +446,90 @@
       display:inline-flex;
       width:max-content;
       margin-top:8px;
+      cursor:pointer;
+      border:none;
+      background:none;
+      padding:0;
+      font-size:15px;
       color:var(--accent);
       font-weight:700;
+    }
+
+    .article-panel{
+      position:fixed;
+      inset:0;
+      z-index:2000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      background:rgba(2, 4, 10, 0.78);
+      backdrop-filter:blur(7px);
+    }
+
+    .article-panel.open{
+      display:flex;
+    }
+
+    .article-dialog{
+      width:min(980px, 100%);
+      max-height:90vh;
+      overflow:auto;
+      border-radius:26px;
+      border:1px solid rgba(255,255,255,0.16);
+      background:linear-gradient(180deg, #151b29 0%, #0f1422 100%);
+      box-shadow:0 30px 80px rgba(0,0,0,0.48);
+      position:relative;
+    }
+
+    .article-close{
+      position:sticky;
+      top:14px;
+      float:left;
+      margin:14px;
+      border:none;
+      background:rgba(255,255,255,0.12);
+      color:#fff;
+      font-size:22px;
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      cursor:pointer;
+    }
+
+    .article-cover{
+      width:100%;
+      height:340px;
+      object-fit:cover;
+      border-bottom:1px solid var(--line);
+    }
+
+    .article-content{
+      padding:24px 24px 30px;
+      clear:both;
+    }
+
+    .article-content h2{
+      margin:8px 0 10px;
+      font-size:36px;
+      line-height:1.28;
+    }
+
+    .article-content p{
+      font-size:18px;
+      line-height:1.9;
+      color:#e3eaf5;
+      margin:0 0 16px;
+      white-space:pre-line;
+    }
+
+    .article-meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      color:#c7d1df;
+      font-size:13px;
+      margin-bottom:14px;
     }
 
     .empty-box,
@@ -510,6 +616,14 @@
       .story-title{
         font-size:21px;
       }
+
+      .article-content h2{
+        font-size:28px;
+      }
+
+      .article-content p{
+        font-size:16px;
+      }
     }
   </style>
 </head>
@@ -534,7 +648,7 @@
 
   <div class="ticker-wrap">
     <div class="container ticker">
-      <div class="ticker-label">מבזקים:</div>
+      <div class="ticker-label">⚡ מבזקים חיים</div>
       <div class="ticker-track" id="tickerTrack">
         <span class="ticker-item">טוען מבזקים...</span>
         <span class="ticker-item">טוען מבזקים...</span>
@@ -553,11 +667,9 @@
             <p class="headline-subtitle" id="mainSubtitle"></p>
             <p class="headline-summary" id="mainSummary"></p>
             <div class="headline-meta">
-              <span id="mainSource">מערכת האתר</span>
-              <span class="dot"></span>
               <span id="mainDate">--</span>
             </div>
-            <a id="mainLink" class="headline-link" href="#" target="_blank" rel="noopener">לכתבה המלאה</a>
+            <button id="mainLink" class="headline-link" type="button">לכתבה המלאה באתר</button>
           </div>
         </article>
 
@@ -591,9 +703,30 @@
     </div>
   </footer>
 
+  <div class="article-panel" id="articlePanel" aria-hidden="true">
+    <article class="article-dialog" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+      <button class="article-close" id="panelClose" type="button" aria-label="סגור">×</button>
+      <img class="article-cover" id="panelImage" src="" alt="">
+      <div class="article-content">
+        <span class="badge" id="panelCategory">חדשות</span>
+        <h2 id="panelTitle">כותרת כתבה</h2>
+        <div class="article-meta" id="panelMeta"></div>
+        <p id="panelBody">תוכן הכתבה יוצג כאן.</p>
+      </div>
+    </article>
+  </div>
+
   <script>
     const NEWS_JSON_URL = './data/news.json?t=' + Date.now();
     const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1504711331083-9c895941bf81?q=80&w=1200&auto=format&fit=crop';
+    const articlePanel = document.getElementById('articlePanel');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelBody = document.getElementById('panelBody');
+    const panelCategory = document.getElementById('panelCategory');
+    const panelImage = document.getElementById('panelImage');
+    const panelMeta = document.getElementById('panelMeta');
+    const panelClose = document.getElementById('panelClose');
+    let articleMap = new Map();
 
     function escapeHtml(text = '') {
       return String(text)
@@ -638,16 +771,48 @@
       document.getElementById('footerDate').textContent = date;
     }
 
+    function normalizeFullContent(item) {
+      if (item.fullContent && String(item.fullContent).trim()) return item.fullContent;
+      return item.content || item.summary || item.subtitle || '';
+    }
+
+    function openArticlePanel(articleId) {
+      if (!articleId || !articleMap.has(articleId)) return;
+      const item = articleMap.get(articleId);
+      panelTitle.textContent = item.title || 'כתבה';
+      panelCategory.textContent = item.category || 'חדשות';
+      panelImage.src = safeImage(item.imageUrl);
+      panelImage.alt = item.title || 'תמונת כתבה';
+      panelBody.textContent = normalizeFullContent(item);
+
+      const metaBits = [
+        formatDate(item.publishedAt),
+        item.author ? `כתב/ת: ${item.author}` : '',
+        item.location ? `מיקום: ${item.location}` : '',
+        item.readingTime ? `זמן קריאה: ${item.readingTime}` : ''
+      ].filter(Boolean);
+      panelMeta.innerHTML = metaBits.map(bit => `<span>${escapeHtml(bit)}</span>`).join('<span class="dot"></span>');
+
+      articlePanel.classList.add('open');
+      articlePanel.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeArticlePanel() {
+      articlePanel.classList.remove('open');
+      articlePanel.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
     function renderMainHeadline(item) {
       if (!item) {
         document.getElementById('mainTitle').textContent = 'אין כותרת ראשית זמינה כרגע';
         document.getElementById('mainSubtitle').textContent = '';
         document.getElementById('mainSummary').textContent = '';
         document.getElementById('mainCategory').textContent = 'חדשות';
-        document.getElementById('mainSource').textContent = 'מערכת האתר';
         document.getElementById('mainDate').textContent = '--';
         document.getElementById('mainImage').src = FALLBACK_IMAGE;
-        document.getElementById('mainLink').href = '#';
+        document.getElementById('mainLink').onclick = null;
         return;
       }
 
@@ -655,11 +820,10 @@
       document.getElementById('mainSubtitle').textContent = item.subtitle || '';
       document.getElementById('mainSummary').textContent = item.summary || item.content || '';
       document.getElementById('mainCategory').textContent = item.category || 'חדשות';
-      document.getElementById('mainSource').textContent = item.sourceName || 'מקור חיצוני';
       document.getElementById('mainDate').textContent = formatDate(item.publishedAt);
       document.getElementById('mainImage').src = safeImage(item.imageUrl);
       document.getElementById('mainImage').alt = item.title || 'כותרת ראשית';
-      document.getElementById('mainLink').href = item.sourceUrl || '#';
+      document.getElementById('mainLink').onclick = () => openArticlePanel(item.id);
     }
 
     function renderSecondaryHeadlines(items) {
@@ -677,6 +841,7 @@
             <span class="mini-cat">${escapeHtml(item.category || 'חדשות')}</span>
             <h3>${escapeHtml(item.title || '')}</h3>
             <p>${escapeHtml(item.subtitle || item.summary || '')}</p>
+            <button class="story-link" type="button" data-open-article="${escapeHtml(item.id || '')}">לקריאה מלאה באתר</button>
           </div>
         </article>
       `).join('');
@@ -699,30 +864,40 @@
             <p class="story-subtitle">${escapeHtml(item.subtitle || '')}</p>
             <p class="story-summary">${escapeHtml(item.summary || item.content || '')}</p>
             <div class="story-meta">
-              <span>${escapeHtml(item.sourceName || 'מקור חיצוני')}</span>
-              <span>•</span>
               <span>${escapeHtml(formatDate(item.publishedAt))}</span>
             </div>
-            <a class="story-link" href="${escapeHtml(item.sourceUrl || '#')}" target="_blank" rel="noopener">לכתבה המלאה</a>
+            <button class="story-link" type="button" data-open-article="${escapeHtml(item.id || '')}">לכתבה המלאה באתר</button>
           </div>
         </article>
       `).join('');
     }
 
-    function renderTicker(items) {
+    function renderTicker(items, bulletins = []) {
       const ticker = document.getElementById('tickerTrack');
 
-      if (!items || !items.length) {
+      const bulletinItems = bulletins.length
+        ? bulletins.map(b => ({ title: b.text || b.title || '' }))
+        : items.map(item => ({ title: item.flash || item.title || '' }));
+
+      if (!bulletinItems || !bulletinItems.length) {
         ticker.innerHTML = '<span class="ticker-item">אין מבזקים זמינים כרגע</span>';
         return;
       }
 
-      const titles = items.slice(0, 6);
+      const titles = bulletinItems.slice(0, 8);
       const duplicated = [...titles, ...titles];
 
       ticker.innerHTML = duplicated.map(item => `
         <span class="ticker-item">${escapeHtml(item.title || '')}</span>
       `).join('');
+    }
+
+    function attachArticleActions() {
+      document.querySelectorAll('[data-open-article]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openArticlePanel(btn.getAttribute('data-open-article'));
+        });
+      });
     }
 
     async function loadNews() {
@@ -736,10 +911,19 @@
         document.getElementById('siteTagline').textContent = data.site?.tagline || 'חדשות, קהילה, עדכונים וכתבות';
         document.getElementById('lastUpdated').textContent = 'עדכון אחרון: ' + formatDate(data.updatedAt);
 
+        const allArticles = [
+          ...(data.mainHeadline ? [data.mainHeadline] : []),
+          ...(data.secondaryHeadlines || []),
+          ...(data.articles || [])
+        ].filter(item => item && item.id);
+
+        articleMap = new Map(allArticles.map(item => [item.id, item]));
+
         renderMainHeadline(data.mainHeadline);
         renderSecondaryHeadlines(data.secondaryHeadlines || []);
         renderArticles(data.articles || []);
-        renderTicker(data.articles || []);
+        renderTicker(data.articles || [], data.bulletins || []);
+        attachArticleActions();
       } catch (err) {
         console.error('שגיאה בטעינת news.json', err);
 
@@ -759,6 +943,15 @@
     updateClock();
     setInterval(updateClock, 30000);
     loadNews();
+    panelClose.addEventListener('click', closeArticlePanel);
+    articlePanel.addEventListener('click', (event) => {
+      if (event.target === articlePanel) closeArticlePanel();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && articlePanel.classList.contains('open')) {
+        closeArticlePanel();
+      }
+    });
   </script>
 </body>
 </html>
