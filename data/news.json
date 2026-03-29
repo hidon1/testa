@@ -3,7 +3,7 @@
     "name": "חדשות הציבור",
     "tagline": "חדשות חיות, פרשנות, טכנולוגיה וקהילה בזמן אמת"
   },
-  "updatedAt": "2026-03-28T23:56:58.334Z",
+  "updatedAt": "2026-03-29T00:56:09.637Z",
   "total": 8,
   "bulletins": [
     {
@@ -86,7 +86,7 @@
       "author": "דסק ביטחון פנים",
       "location": "ישראל",
       "readingTime": "2 דקות",
-      "importance": 10,
+      "importance": 9,
       "tags": [],
       "flash": "מי מתקרב מאחור?"
     }
@@ -166,7 +166,7 @@
       "author": "דסק ביטחון פנים",
       "location": "ישראל",
       "readingTime": "2 דקות",
-      "importance": 10,
+      "importance": 9,
       "tags": [],
       "flash": "מי מתקרב מאחור?"
     },
@@ -185,7 +185,7 @@
       "author": "דסק ביטחון פנים",
       "location": "ישראל",
       "readingTime": "2 דקות",
-      "importance": 10,
+      "importance": 9,
       "tags": [],
       "flash": "פרצופה של המדינה"
     },
@@ -204,7 +204,7 @@
       "author": "דסק חדשות",
       "location": "ישראל",
       "readingTime": "2 דקות",
-      "importance": 7,
+      "importance": 6,
       "tags": [],
       "flash": "חודש למלחמה: סיכום ביניים"
     },
@@ -223,7 +223,7 @@
       "author": "דסק חדשות",
       "location": "ישראל",
       "readingTime": "2 דקות",
-      "importance": 7,
+      "importance": 6,
       "tags": [],
       "flash": "הרמטכ\"ל בהודעה חריגה אחרי תקיפת צוות CNN: \"הציגו בהקדם המלצות פיקודיו…"
     },
@@ -242,7 +242,7 @@
       "author": "דסק חדשות",
       "location": "דרום הארץ",
       "readingTime": "2 דקות",
-      "importance": 7,
+      "importance": 6,
       "tags": [],
       "flash": "קריאה לסדר לחברה בישראל"
     }
