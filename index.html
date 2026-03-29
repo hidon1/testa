@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>חדשות הציבור</title>
   <meta name="description" content="חדשות הציבור - אתר חדשות המתעדכן מקובץ JSON" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Heebo:wght@500;700;900&display=swap" rel="stylesheet">
   <style>
     :root{
       --bg:#f4f7fb;
@@ -30,7 +33,7 @@
 
     body{
       margin:0;
-      font-family:Arial, "Segoe UI", sans-serif;
+      font-family:"Assistant", Arial, "Segoe UI", sans-serif;
       color:var(--text);
       background:
         radial-gradient(circle at top right, rgba(216,182,108,0.16), transparent 36%),
@@ -80,20 +83,16 @@
     }
 
     .logo{
-      width:56px;
-      height:56px;
-      border-radius:18px;
+      width:72px;
+      height:72px;
+      border-radius:20px;
       display:grid;
       place-items:center;
-      font-size:30px;
-      font-weight:800;
-      color:#100522;
-      background:
-        conic-gradient(from 210deg, #ff4d8d, #ffd166, #9cff57, #7bdff2, #ff4d8d);
+      background:radial-gradient(circle at 20% 20%, #213447, #101923 70%);
       border:1px solid rgba(255,255,255,0.18);
-      box-shadow:0 10px 30px rgba(255,77,141,0.35), 0 0 0 2px rgba(255,255,255,0.08) inset;
-      transform:rotate(-8deg);
-      animation:logoPulse 4s ease-in-out infinite;
+      box-shadow:0 10px 30px rgba(9, 20, 42, 0.42), 0 0 0 2px rgba(255,255,255,0.08) inset;
+      animation:logoPulse 6s ease-in-out infinite;
+      overflow:hidden;
     }
     @keyframes logoPulse{
       0%,100%{ transform:rotate(-8deg) scale(1); filter:saturate(1); }
@@ -104,6 +103,9 @@
       margin:0;
       font-size:28px;
       line-height:1;
+      font-family:"Heebo", "Assistant", sans-serif;
+      font-weight:900;
+      letter-spacing:0.2px;
     }
 
     .brand p{
@@ -289,6 +291,49 @@
       background:linear-gradient(135deg, var(--accent-hot), var(--gold-strong));
       color:#171717;
       font-weight:800;
+      transition:transform .2s ease, box-shadow .2s ease;
+    }
+
+    .headline-link:hover{
+      transform:translateY(-2px);
+      box-shadow:0 8px 24px rgba(255,77,141,0.34);
+    }
+
+    .logo-svg{
+      width:56px;
+      height:56px;
+      filter:drop-shadow(0 0 10px rgba(123,223,242,.24));
+    }
+
+    .logo-ring{
+      transform-origin:center;
+      animation:logoSpin 8s linear infinite;
+    }
+
+    .logo-wave{
+      stroke-dasharray:130;
+      stroke-dashoffset:130;
+      animation:waveDraw 4.4s ease-in-out infinite;
+    }
+
+    .logo-pulse{
+      animation:dotPulse 1.4s ease-in-out infinite alternate;
+    }
+
+    @keyframes logoSpin{
+      from{ transform:rotate(0deg); }
+      to{ transform:rotate(360deg); }
+    }
+
+    @keyframes waveDraw{
+      0%,18%{ stroke-dashoffset:130; opacity:.2; }
+      48%,76%{ stroke-dashoffset:12; opacity:1; }
+      100%{ stroke-dashoffset:-130; opacity:.5; }
+    }
+
+    @keyframes dotPulse{
+      from{ opacity:.45; transform:scale(.86); }
+      to{ opacity:1; transform:scale(1.15); }
     }
 
     .side-stack{
@@ -632,7 +677,28 @@
   <header class="topbar">
     <div class="container topbar-inner">
       <div class="brand">
-        <div class="logo">ח</div>
+        <div class="logo" aria-hidden="true">
+          <svg class="logo-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle class="logo-ring" cx="32" cy="32" r="25" stroke="url(#ringGrad)" stroke-width="2.8" opacity="0.95"/>
+            <path class="logo-wave" d="M9 35C15 29 20 39 26 33C32 27 36 37 42 31C47 26 50 31 55 29" stroke="url(#waveGrad)" stroke-width="3.2" stroke-linecap="round"/>
+            <rect x="12" y="14" width="12" height="4" rx="2" fill="#FFD166" opacity="0.85"/>
+            <rect x="12" y="22" width="18" height="3.4" rx="1.7" fill="#7BDFF2" opacity="0.8"/>
+            <rect x="12" y="28" width="15" height="3.4" rx="1.7" fill="#9CFF57" opacity="0.8"/>
+            <circle class="logo-pulse" cx="48" cy="18" r="4" fill="#FF4D8D"/>
+            <defs>
+              <linearGradient id="ringGrad" x1="5" y1="5" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FF4D8D"/>
+                <stop offset="0.55" stop-color="#7BDFF2"/>
+                <stop offset="1" stop-color="#9CFF57"/>
+              </linearGradient>
+              <linearGradient id="waveGrad" x1="9" y1="35" x2="55" y2="29" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFD166"/>
+                <stop offset="0.52" stop-color="#FF4D8D"/>
+                <stop offset="1" stop-color="#7BDFF2"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
         <div>
           <h1 id="siteName">חדשות הציבור</h1>
           <p id="siteTagline">חדשות, קהילה, עדכונים וכתבות</p>
@@ -683,7 +749,7 @@
       <div class="section-head">
         <div>
           <h2>חדשות היום</h2>
-          <p>עדכונים אוטומטיים מקובץ JSON המתעדכן ברקע</p>
+          <p>עדכון אוטומטי כל 10 דקות: תצוגת 30 כתבות והחלפה של 5 בכל מחזור</p>
         </div>
       </div>
 
@@ -717,8 +783,11 @@
   </div>
 
   <script>
-    const NEWS_JSON_URL = './data/news.json?t=' + Date.now();
+    const NEWS_JSON_URL = './data/news.json';
     const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1504711331083-9c895941bf81?q=80&w=1200&auto=format&fit=crop';
+    const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+    const DISPLAY_ARTICLES = 30;
+    const ROTATE_CHUNK = 5;
     const articlePanel = document.getElementById('articlePanel');
     const panelTitle = document.getElementById('panelTitle');
     const panelBody = document.getElementById('panelBody');
@@ -727,6 +796,19 @@
     const panelMeta = document.getElementById('panelMeta');
     const panelClose = document.getElementById('panelClose');
     let articleMap = new Map();
+    let cycleIndex = 0;
+
+    function rotateList(items, offset) {
+      if (!items.length) return [];
+      const safeOffset = ((offset % items.length) + items.length) % items.length;
+      return [...items.slice(safeOffset), ...items.slice(0, safeOffset)];
+    }
+
+    function pickDisplayArticles(items = [], offset = 0, take = DISPLAY_ARTICLES) {
+      if (!items.length) return [];
+      const rotated = rotateList(items, offset);
+      return rotated.slice(0, Math.min(take, rotated.length));
+    }
 
     function escapeHtml(text = '') {
       return String(text)
@@ -902,7 +984,8 @@
 
     async function loadNews() {
       try {
-        const res = await fetch(NEWS_JSON_URL, { cache: 'no-store' });
+        const cacheBreaker = `${NEWS_JSON_URL}?t=${Date.now()}`;
+        const res = await fetch(cacheBreaker, { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
 
         const data = await res.json();
@@ -911,19 +994,34 @@
         document.getElementById('siteTagline').textContent = data.site?.tagline || 'חדשות, קהילה, עדכונים וכתבות';
         document.getElementById('lastUpdated').textContent = 'עדכון אחרון: ' + formatDate(data.updatedAt);
 
+        const sourceArticles = (data.articles || []).filter(item => item && item.id);
+        const displayArticles = pickDisplayArticles(sourceArticles, cycleIndex * ROTATE_CHUNK, DISPLAY_ARTICLES);
+        const mainHeadline = sourceArticles.length
+          ? sourceArticles[(cycleIndex * ROTATE_CHUNK) % sourceArticles.length]
+          : data.mainHeadline;
+
+        const usedMainId = mainHeadline?.id;
+        const secondaryFromRotation = displayArticles
+          .filter(item => item.id !== usedMainId)
+          .slice(0, 2);
+        const secondaryHeadlines = secondaryFromRotation.length
+          ? secondaryFromRotation
+          : (data.secondaryHeadlines || []).slice(0, 2);
+
         const allArticles = [
-          ...(data.mainHeadline ? [data.mainHeadline] : []),
-          ...(data.secondaryHeadlines || []),
-          ...(data.articles || [])
+          ...(mainHeadline ? [mainHeadline] : []),
+          ...secondaryHeadlines,
+          ...displayArticles
         ].filter(item => item && item.id);
 
         articleMap = new Map(allArticles.map(item => [item.id, item]));
 
-        renderMainHeadline(data.mainHeadline);
-        renderSecondaryHeadlines(data.secondaryHeadlines || []);
-        renderArticles(data.articles || []);
-        renderTicker(data.articles || [], data.bulletins || []);
+        renderMainHeadline(mainHeadline);
+        renderSecondaryHeadlines(secondaryHeadlines);
+        renderArticles(displayArticles);
+        renderTicker(displayArticles, data.bulletins || []);
         attachArticleActions();
+        cycleIndex += 1;
       } catch (err) {
         console.error('שגיאה בטעינת news.json', err);
 
@@ -943,6 +1041,7 @@
     updateClock();
     setInterval(updateClock, 30000);
     loadNews();
+    setInterval(loadNews, REFRESH_INTERVAL_MS);
     panelClose.addEventListener('click', closeArticlePanel);
     articlePanel.addEventListener('click', (event) => {
       if (event.target === articlePanel) closeArticlePanel();
