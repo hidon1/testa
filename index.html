@@ -729,6 +729,7 @@
           <img id="mainImage" src="" alt="כותרת ראשית" />
           <div class="headline-overlay">
             <div class="badge" id="mainCategory">כותרת ראשית</div>
+            <div class="badge" id="mainTypeBadge" style="display:none;">כתבת עומק</div>
             <h2 class="headline-title" id="mainTitle">טוען כותרת ראשית...</h2>
             <p class="headline-subtitle" id="mainSubtitle"></p>
             <p class="headline-summary" id="mainSummary"></p>
@@ -749,7 +750,7 @@
       <div class="section-head">
         <div>
           <h2>חדשות היום</h2>
-          <p>עדכון אוטומטי: כותרת ראשית כל 10 דקות, יתר התוכן כל 30 דקות</p>
+          <p>עדכון אוטומטי: חדשות RSS כל 10 דקות, כתבת עומק נוספת כל 30 דקות</p>
         </div>
       </div>
 
@@ -775,6 +776,7 @@
       <img class="article-cover" id="panelImage" src="" alt="">
       <div class="article-content">
         <span class="badge" id="panelCategory">חדשות</span>
+        <span class="badge" id="panelTypeBadge" style="display:none;">כתבת עומק</span>
         <h2 id="panelTitle">כותרת כתבה</h2>
         <div class="article-meta" id="panelMeta"></div>
         <p id="panelBody">תוכן הכתבה יוצג כאן.</p>
@@ -791,6 +793,7 @@
     const panelTitle = document.getElementById('panelTitle');
     const panelBody = document.getElementById('panelBody');
     const panelCategory = document.getElementById('panelCategory');
+    const panelTypeBadge = document.getElementById('panelTypeBadge');
     const panelImage = document.getElementById('panelImage');
     const panelMeta = document.getElementById('panelMeta');
     const panelClose = document.getElementById('panelClose');
@@ -830,6 +833,12 @@
       });
     }
 
+    function buildCategoryText(item) {
+      const category = item?.category || 'חדשות';
+      const analysisLabel = item?.analysisLabel ? ` · ${item.analysisLabel}` : '';
+      return `${category}${analysisLabel}`;
+    }
+
     function updateClock() {
       const now = new Date();
       const time = now.toLocaleTimeString('he-IL', {
@@ -851,7 +860,8 @@
       if (!articleId || !articleMap.has(articleId)) return;
       const item = articleMap.get(articleId);
       panelTitle.textContent = item.title || 'כתבה';
-      panelCategory.textContent = item.category || 'חדשות';
+      panelCategory.textContent = buildCategoryText(item);
+      panelTypeBadge.style.display = item.articleType === 'analysis' ? 'inline-flex' : 'none';
       panelImage.src = safeImage(item.image);
       panelImage.alt = item.title || 'תמונת כתבה';
       panelBody.textContent = item.fullContent || item.summary || '';
@@ -861,7 +871,8 @@
         item.author ? `כתב/ת: ${item.author}` : '',
         item.location ? `מיקום: ${item.location}` : '',
         item.readingTime ? `זמן קריאה: ${item.readingTime}` : '',
-        item.source ? `מקור: ${item.source}` : ''
+        item.source ? `מקור: ${item.source}` : '',
+        item.confidence ? `רמת ודאות: ${item.confidence}` : ''
       ].filter(Boolean);
       panelMeta.innerHTML = metaBits.map(bit => `<span>${escapeHtml(bit)}</span>`).join('<span class="dot"></span>');
 
@@ -882,6 +893,7 @@
         document.getElementById('mainSubtitle').textContent = '';
         document.getElementById('mainSummary').textContent = '';
         document.getElementById('mainCategory').textContent = 'חדשות';
+        document.getElementById('mainTypeBadge').style.display = 'none';
         document.getElementById('mainDate').textContent = '--';
         document.getElementById('mainImage').src = FALLBACK_IMAGE;
         document.getElementById('mainLink').onclick = null;
@@ -891,7 +903,8 @@
       document.getElementById('mainTitle').textContent = item.title || '';
       document.getElementById('mainSubtitle').textContent = '';
       document.getElementById('mainSummary').textContent = item.summary || '';
-      document.getElementById('mainCategory').textContent = item.category || 'חדשות';
+      document.getElementById('mainCategory').textContent = buildCategoryText(item);
+      document.getElementById('mainTypeBadge').style.display = item.articleType === 'analysis' ? 'inline-flex' : 'none';
       document.getElementById('mainDate').textContent = formatDate(item.publishedAt);
       document.getElementById('mainImage').src = safeImage(item.image);
       document.getElementById('mainImage').alt = item.title || 'כותרת ראשית';
@@ -917,13 +930,22 @@
       box.innerHTML = items.slice(0, 2).map(item => {
         const buttonLabel = item.originalUrl ? 'לכתבה המלאה באתר' : 'לקריאה מלאה';
         const action = item.originalUrl ? 'external' : 'panel';
+        const analysisBadge = item.articleType === 'analysis'
+          ? '<span class="mini-cat">כתבת עומק</span>'
+          : '';
         return `
           <article class="mini-card">
             <img src="${escapeHtml(safeImage(item.image))}" alt="${escapeHtml(item.title || '')}">
             <div class="mini-body">
-              <span class="mini-cat">${escapeHtml(item.category || 'חדשות')}</span>
+              <span class="mini-cat">${escapeHtml(buildCategoryText(item))}</span>
+              ${analysisBadge}
               <h3>${escapeHtml(item.title || '')}</h3>
               <p>${escapeHtml(item.summary || '')}</p>
+              <div class="story-meta">
+                <span>${escapeHtml(formatDate(item.publishedAt))}</span>
+                <span class="dot"></span>
+                <span>${escapeHtml(item.source || 'מערכת האתר')}</span>
+              </div>
               <button
                 class="story-link"
                 type="button"
@@ -949,16 +971,22 @@
       grid.innerHTML = items.map(item => {
         const buttonLabel = item.originalUrl ? 'לכתבה המלאה באתר' : 'לקריאה מלאה';
         const action = item.originalUrl ? 'external' : 'panel';
+        const analysisBadge = item.articleType === 'analysis'
+          ? '<span class="story-category">כתבת עומק</span>'
+          : '';
         return `
           <article class="story-card">
             <img src="${escapeHtml(safeImage(item.image))}" alt="${escapeHtml(item.title || '')}">
             <div class="story-body">
-              <span class="story-category">${escapeHtml(item.category || 'חדשות')}</span>
+              <span class="story-category">${escapeHtml(buildCategoryText(item))}</span>
+              ${analysisBadge}
               <h3 class="story-title">${escapeHtml(item.title || '')}</h3>
               <p class="story-subtitle"></p>
               <p class="story-summary">${escapeHtml(item.summary || '')}</p>
               <div class="story-meta">
                 <span>${escapeHtml(formatDate(item.publishedAt))}</span>
+                <span class="dot"></span>
+                <span>${escapeHtml(item.source || 'מערכת האתר')}</span>
               </div>
               <button
                 class="story-link"
@@ -1022,8 +1050,8 @@
 
         const data = await res.json();
 
-        const headlineRefreshMinutes = data.refreshPolicy?.headlineRefreshMinutes || DEFAULT_HEADLINE_REFRESH_MINUTES;
-        const contentRefreshMinutes = data.refreshPolicy?.contentRefreshMinutes || DEFAULT_CONTENT_REFRESH_MINUTES;
+        const rssRefreshMinutes = data.refreshPolicy?.rssRefreshMinutes || DEFAULT_HEADLINE_REFRESH_MINUTES;
+        const deepArticleRefreshMinutes = data.refreshPolicy?.deepArticleRefreshMinutes || DEFAULT_CONTENT_REFRESH_MINUTES;
 
         document.getElementById('siteName').textContent = data.siteName || 'חדשות הציבור';
         document.getElementById('siteTagline').textContent = data.siteTagline || 'חדשות, קהילה, עדכונים וכתבות';
@@ -1042,7 +1070,7 @@
         renderTicker(sourceItems);
         attachArticleActions();
 
-        const refreshIntervalMs = Math.max(1, Math.min(headlineRefreshMinutes, contentRefreshMinutes)) * 60 * 1000;
+        const refreshIntervalMs = Math.max(1, Math.min(rssRefreshMinutes, deepArticleRefreshMinutes)) * 60 * 1000;
         window.clearInterval(window.__newsRefreshInterval);
         window.__newsRefreshInterval = window.setInterval(loadNews, refreshIntervalMs);
       } catch (err) {
