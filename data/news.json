@@ -1,30 +1,83 @@
+אני
+
 {
-  "updatedAt": "2026-03-29T10:00:00.000Z",
+  "updatedAt": "2026-03-29T12:00:00.000Z",
   "siteName": "חדשות הציבור",
   "siteTagline": "חדשות, קהילה, עדכונים וכתבות",
-  "version": 2,
+  "version": 5,
   "refreshPolicy": {
-    "headlineRefreshMinutes": 10,
-    "contentRefreshMinutes": 30,
+    "rssRefreshMinutes": 10,
+    "deepArticleRefreshMinutes": 30,
     "articleMaxAgeHours": 48
   },
   "items": [
     {
       "id": "n_001",
-      "title": "כותרת לדוגמה",
-      "summary": "תקציר קצר לדוגמה עבור האתר.",
-      "fullContent": "תוכן מלא לדוגמה. כאן תוצג הכתבה המורחבת.",
-      "category": "פוליטיקה",
-      "tags": ["כנסת", "ממשלה"],
+      "title": "כותרת ראשית לדוגמה",
+      "summary": "זהו תקציר קצר של הכתבה הראשית, בניסוח מסודר וברור.",
+      "fullContent": "זהו תוכן מלא לדוגמה של הכתבה הראשית. כאן יוצג טקסט ארוך יותר, עם פסקאות מסודרות, על בסיס הנתונים שהמערכת אספה מהמקורות.",
+      "category": "חדשות",
+      "tags": ["מבזק", "ארץ"],
       "image": "https://images.unsplash.com/photo-1504711331083-9c895941bf81?q=80&w=1200&auto=format&fit=crop",
-      "source": "מערכת האתר",
-      "originalUrl": "",
-      "publishedAt": "2026-03-29T09:30:00.000Z",
+      "source": "כיכר השבת | ynet",
+      "sourceNames": ["כיכר השבת", "ynet"],
+      "originalUrl": "https://example.com/article-1",
+      "originalUrls": [
+        "https://example.com/article-1",
+        "https://example.com/article-1b"
+      ],
+      "publishedAt": "2026-03-29T11:30:00.000Z",
       "author": "מערכת",
       "location": "ירושלים",
-      "readingTime": "3 דקות",
+      "readingTime": "4 דקות",
       "flash": "כותרת מבזק קצרה",
-      "analysisLabel": "ניתוח"
+      "analysisLabel": "ניתוח מערכת",
+      "confidence": "high",
+      "articleType": "analysis"
+    },
+    {
+      "id": "n_002",
+      "title": "כותרת כתבה נוספת",
+      "summary": "תקציר קצר נוסף עבור כרטיס חדשות רגיל.",
+      "fullContent": "תוכן מלא של כתבה נוספת. כאן יופיע גוף הכתבה המלא, אם אין קישור חיצוני או אם תרצה להציג אותה בתוך הפאנל.",
+      "category": "פוליטיקה",
+      "tags": ["כנסת"],
+      "image": "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1200&auto=format&fit=crop",
+      "source": "וואלה חדשות",
+      "sourceNames": ["וואלה חדשות"],
+      "originalUrl": "https://example.com/article-2",
+      "originalUrls": [
+        "https://example.com/article-2"
+      ],
+      "publishedAt": "2026-03-29T11:05:00.000Z",
+      "author": "מערכת",
+      "location": "",
+      "readingTime": "3 דקות",
+      "flash": "עדכון פוליטי חדש",
+      "analysisLabel": "ניתוח",
+      "confidence": "medium",
+      "articleType": "news"
+    },
+    {
+      "id": "n_003",
+      "title": "כותרת שלישית לדוגמה",
+      "summary": "עוד תקציר קצר לכרטיס משני או לכרטיס בגריד.",
+      "fullContent": "תוכן מלא נוסף לדוגמה.",
+      "category": "פנים חרדי",
+      "tags": ["קהילה"],
+      "image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1200&auto=format&fit=crop",
+      "source": "כיכר השבת - חרדים",
+      "sourceNames": ["כיכר השבת - חרדים"],
+      "originalUrl": "",
+      "originalUrls": [],
+      "publishedAt": "2026-03-29T10:40:00.000Z",
+      "author": "מערכת",
+      "location": "בני ברק",
+      "readingTime": "2 דקות",
+      "flash": "עדכון קהילתי חדש",
+      "analysisLabel": "ניתוח",
+      "confidence": "low",
+      "articleType": "news"
     }
   ]
 } 
