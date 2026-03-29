@@ -1,17 +1,21 @@
-
 {
   "updatedAt": "2026-03-29T10:00:00.000Z",
   "siteName": "חדשות הציבור",
   "siteTagline": "חדשות, קהילה, עדכונים וכתבות",
   "version": 2,
+  "refreshPolicy": {
+    "headlineRefreshMinutes": 10,
+    "contentRefreshMinutes": 30,
+    "articleMaxAgeHours": 48
+  },
   "items": [
     {
       "id": "n_001",
-      "title": "עדכון ראשון בכותרות היום",
-      "summary": "זהו תקציר קצר של הכתבה הראשית, בניסוח נקי ומסודר.",
-      "fullContent": "זהו תוכן מלא לדוגמה של הכתבה. כאן אפשר להציג כמה פסקאות של תוכן, תיאור מורחב, ורקע נוסף.",
-      "category": "חדשות",
-      "tags": ["מבזק", "ארץ"],
+      "title": "כותרת לדוגמה",
+      "summary": "תקציר קצר לדוגמה עבור האתר.",
+      "fullContent": "תוכן מלא לדוגמה. כאן תוצג הכתבה המורחבת.",
+      "category": "פוליטיקה",
+      "tags": ["כנסת", "ממשלה"],
       "image": "https://images.unsplash.com/photo-1504711331083-9c895941bf81?q=80&w=1200&auto=format&fit=crop",
       "source": "מערכת האתר",
       "originalUrl": "",
@@ -19,55 +23,8 @@
       "author": "מערכת",
       "location": "ירושלים",
       "readingTime": "3 דקות",
-      "flash": "עדכון ראשון בכותרות היום"
-    },
-    {
-      "id": "n_002",
-      "title": "כותרת משנית שנייה לאתר",
-      "summary": "תקציר קצר נוסף עבור כרטיס משני.",
-      "fullContent": "תוכן מלא עבור הכתבה המשנית השנייה.",
-      "category": "ארץ",
-      "tags": ["עדכון"],
-      "image": "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1200&auto=format&fit=crop",
-      "source": "מערכת האתר",
-      "originalUrl": "",
-      "publishedAt": "2026-03-29T09:10:00.000Z",
-      "author": "מערכת",
-      "location": "בני ברק",
-      "readingTime": "2 דקות",
-      "flash": "כותרת משנית שנייה לאתר"
-    },
-    {
-      "id": "n_003",
-      "title": "כותרת משנית שלישית",
-      "summary": "עוד תקציר קצר המתאים לכרטיס משני.",
-      "fullContent": "תוכן מלא עבור הכותרת המשנית השלישית.",
-      "category": "קהילה",
-      "tags": ["קהילה"],
-      "image": "https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1200&auto=format&fit=crop",
-      "source": "מערכת האתר",
-      "originalUrl": "",
-      "publishedAt": "2026-03-29T08:50:00.000Z",
-      "author": "מערכת",
-      "location": "בית שמש",
-      "readingTime": "2 דקות",
-      "flash": "כותרת משנית שלישית"
-    },
-    {
-      "id": "n_004",
-      "title": "כתבה נוספת לגריד החדשות",
-      "summary": "תקציר כתבה עבור אזור חדשות היום.",
-      "fullContent": "תוכן מלא עבור כתבה נוספת בגריד.",
-      "category": "עולם",
-      "tags": ["עולם"],
-      "image": "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&w=1200&auto=format&fit=crop",
-      "source": "מערכת האתר",
-      "originalUrl": "",
-      "publishedAt": "2026-03-29T08:20:00.000Z",
-      "author": "מערכת",
-      "location": "",
-      "readingTime": "4 דקות",
-      "flash": "כתבה נוספת לגריד החדשות"
+      "flash": "כותרת מבזק קצרה",
+      "analysisLabel": "ניתוח"
     }
   ]
 } 
