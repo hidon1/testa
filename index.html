@@ -749,7 +749,7 @@
       <div class="section-head">
         <div>
           <h2>חדשות היום</h2>
-          <p>עדכון אוטומטי כל 10 דקות: תצוגת 30 כתבות והחלפה של 5 בכל מחזור</p>
+          <p>עדכון אוטומטי: כותרת ראשית כל 10 דקות, יתר התוכן כל 30 דקות</p>
         </div>
       </div>
 
@@ -785,9 +785,8 @@
   <script>
     const NEWS_JSON_URL = './data/news.json';
     const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1504711331083-9c895941bf81?q=80&w=1200&auto=format&fit=crop';
-    const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
-    const DISPLAY_ARTICLES = 30;
-    const ROTATE_CHUNK = 5;
+    const DEFAULT_HEADLINE_REFRESH_MINUTES = 10;
+    const DEFAULT_CONTENT_REFRESH_MINUTES = 30;
     const articlePanel = document.getElementById('articlePanel');
     const panelTitle = document.getElementById('panelTitle');
     const panelBody = document.getElementById('panelBody');
@@ -796,19 +795,6 @@
     const panelMeta = document.getElementById('panelMeta');
     const panelClose = document.getElementById('panelClose');
     let articleMap = new Map();
-    let cycleIndex = 0;
-
-    function rotateList(items, offset) {
-      if (!items.length) return [];
-      const safeOffset = ((offset % items.length) + items.length) % items.length;
-      return [...items.slice(safeOffset), ...items.slice(0, safeOffset)];
-    }
-
-    function pickDisplayArticles(items = [], offset = 0, take = DISPLAY_ARTICLES) {
-      if (!items.length) return [];
-      const rotated = rotateList(items, offset);
-      return rotated.slice(0, Math.min(take, rotated.length));
-    }
 
     function escapeHtml(text = '') {
       return String(text)
@@ -836,6 +822,14 @@
       return url && String(url).trim() ? url : FALLBACK_IMAGE;
     }
 
+    function sortByPublishedAtDesc(items = []) {
+      return [...items].sort((a, b) => {
+        const aTs = new Date(a?.publishedAt || 0).getTime();
+        const bTs = new Date(b?.publishedAt || 0).getTime();
+        return bTs - aTs;
+      });
+    }
+
     function updateClock() {
       const now = new Date();
       const time = now.toLocaleTimeString('he-IL', {
@@ -853,25 +847,21 @@
       document.getElementById('footerDate').textContent = date;
     }
 
-    function normalizeFullContent(item) {
-      if (item.fullContent && String(item.fullContent).trim()) return item.fullContent;
-      return item.content || item.summary || item.subtitle || '';
-    }
-
     function openArticlePanel(articleId) {
       if (!articleId || !articleMap.has(articleId)) return;
       const item = articleMap.get(articleId);
       panelTitle.textContent = item.title || 'כתבה';
       panelCategory.textContent = item.category || 'חדשות';
-      panelImage.src = safeImage(item.imageUrl);
+      panelImage.src = safeImage(item.image);
       panelImage.alt = item.title || 'תמונת כתבה';
-      panelBody.textContent = normalizeFullContent(item);
+      panelBody.textContent = item.fullContent || item.summary || '';
 
       const metaBits = [
         formatDate(item.publishedAt),
         item.author ? `כתב/ת: ${item.author}` : '',
         item.location ? `מיקום: ${item.location}` : '',
-        item.readingTime ? `זמן קריאה: ${item.readingTime}` : ''
+        item.readingTime ? `זמן קריאה: ${item.readingTime}` : '',
+        item.source ? `מקור: ${item.source}` : ''
       ].filter(Boolean);
       panelMeta.innerHTML = metaBits.map(bit => `<span>${escapeHtml(bit)}</span>`).join('<span class="dot"></span>');
 
@@ -899,13 +889,21 @@
       }
 
       document.getElementById('mainTitle').textContent = item.title || '';
-      document.getElementById('mainSubtitle').textContent = item.subtitle || '';
-      document.getElementById('mainSummary').textContent = item.summary || item.content || '';
+      document.getElementById('mainSubtitle').textContent = '';
+      document.getElementById('mainSummary').textContent = item.summary || '';
       document.getElementById('mainCategory').textContent = item.category || 'חדשות';
       document.getElementById('mainDate').textContent = formatDate(item.publishedAt);
-      document.getElementById('mainImage').src = safeImage(item.imageUrl);
+      document.getElementById('mainImage').src = safeImage(item.image);
       document.getElementById('mainImage').alt = item.title || 'כותרת ראשית';
-      document.getElementById('mainLink').onclick = () => openArticlePanel(item.id);
+
+      const mainLink = document.getElementById('mainLink');
+      if (item.originalUrl) {
+        mainLink.textContent = 'לכתבה המלאה באתר';
+        mainLink.onclick = () => window.open(item.originalUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        mainLink.textContent = 'לקריאה מלאה';
+        mainLink.onclick = () => openArticlePanel(item.id);
+      }
     }
 
     function renderSecondaryHeadlines(items) {
@@ -916,17 +914,28 @@
         return;
       }
 
-      box.innerHTML = items.slice(0, 2).map(item => `
-        <article class="mini-card">
-          <img src="${escapeHtml(safeImage(item.imageUrl))}" alt="${escapeHtml(item.title || '')}">
-          <div class="mini-body">
-            <span class="mini-cat">${escapeHtml(item.category || 'חדשות')}</span>
-            <h3>${escapeHtml(item.title || '')}</h3>
-            <p>${escapeHtml(item.subtitle || item.summary || '')}</p>
-            <button class="story-link" type="button" data-open-article="${escapeHtml(item.id || '')}">לקריאה מלאה באתר</button>
-          </div>
-        </article>
-      `).join('');
+      box.innerHTML = items.slice(0, 2).map(item => {
+        const buttonLabel = item.originalUrl ? 'לכתבה המלאה באתר' : 'לקריאה מלאה';
+        const action = item.originalUrl ? 'external' : 'panel';
+        return `
+          <article class="mini-card">
+            <img src="${escapeHtml(safeImage(item.image))}" alt="${escapeHtml(item.title || '')}">
+            <div class="mini-body">
+              <span class="mini-cat">${escapeHtml(item.category || 'חדשות')}</span>
+              <h3>${escapeHtml(item.title || '')}</h3>
+              <p>${escapeHtml(item.summary || '')}</p>
+              <button
+                class="story-link"
+                type="button"
+                data-action="${escapeHtml(action)}"
+                data-open-article="${escapeHtml(item.id || '')}"
+                data-url="${escapeHtml(item.originalUrl || '')}">
+                ${escapeHtml(buttonLabel)}
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
     }
 
     function renderArticles(items) {
@@ -937,47 +946,70 @@
         return;
       }
 
-      grid.innerHTML = items.map(item => `
-        <article class="story-card">
-          <img src="${escapeHtml(safeImage(item.imageUrl))}" alt="${escapeHtml(item.title || '')}">
-          <div class="story-body">
-            <span class="story-category">${escapeHtml(item.category || 'חדשות')}</span>
-            <h3 class="story-title">${escapeHtml(item.title || '')}</h3>
-            <p class="story-subtitle">${escapeHtml(item.subtitle || '')}</p>
-            <p class="story-summary">${escapeHtml(item.summary || item.content || '')}</p>
-            <div class="story-meta">
-              <span>${escapeHtml(formatDate(item.publishedAt))}</span>
+      grid.innerHTML = items.map(item => {
+        const buttonLabel = item.originalUrl ? 'לכתבה המלאה באתר' : 'לקריאה מלאה';
+        const action = item.originalUrl ? 'external' : 'panel';
+        return `
+          <article class="story-card">
+            <img src="${escapeHtml(safeImage(item.image))}" alt="${escapeHtml(item.title || '')}">
+            <div class="story-body">
+              <span class="story-category">${escapeHtml(item.category || 'חדשות')}</span>
+              <h3 class="story-title">${escapeHtml(item.title || '')}</h3>
+              <p class="story-subtitle"></p>
+              <p class="story-summary">${escapeHtml(item.summary || '')}</p>
+              <div class="story-meta">
+                <span>${escapeHtml(formatDate(item.publishedAt))}</span>
+              </div>
+              <button
+                class="story-link"
+                type="button"
+                data-action="${escapeHtml(action)}"
+                data-open-article="${escapeHtml(item.id || '')}"
+                data-url="${escapeHtml(item.originalUrl || '')}">
+                ${escapeHtml(buttonLabel)}
+              </button>
             </div>
-            <button class="story-link" type="button" data-open-article="${escapeHtml(item.id || '')}">לכתבה המלאה באתר</button>
-          </div>
-        </article>
-      `).join('');
+          </article>
+        `;
+      }).join('');
     }
 
-    function renderTicker(items, bulletins = []) {
+    function renderTicker(items) {
       const ticker = document.getElementById('tickerTrack');
 
-      const bulletinItems = bulletins.length
-        ? bulletins.map(b => ({ title: b.text || b.title || '' }))
-        : items.map(item => ({ title: item.flash || item.title || '' }));
-
-      if (!bulletinItems || !bulletinItems.length) {
+      if (!items || !items.length) {
         ticker.innerHTML = '<span class="ticker-item">אין מבזקים זמינים כרגע</span>';
         return;
       }
 
-      const titles = bulletinItems.slice(0, 8);
-      const duplicated = [...titles, ...titles];
+      const tickerItems = items
+        .slice(0, 8)
+        .map(item => item.flash || item.title || '')
+        .filter(Boolean);
 
-      ticker.innerHTML = duplicated.map(item => `
-        <span class="ticker-item">${escapeHtml(item.title || '')}</span>
+      if (!tickerItems.length) {
+        ticker.innerHTML = '<span class="ticker-item">אין מבזקים זמינים כרגע</span>';
+        return;
+      }
+
+      const duplicated = [...tickerItems, ...tickerItems];
+      ticker.innerHTML = duplicated.map(text => `
+        <span class="ticker-item">${escapeHtml(text)}</span>
       `).join('');
     }
 
     function attachArticleActions() {
       document.querySelectorAll('[data-open-article]').forEach(btn => {
         btn.addEventListener('click', () => {
-          openArticlePanel(btn.getAttribute('data-open-article'));
+          const action = btn.getAttribute('data-action');
+          const url = btn.getAttribute('data-url');
+          const articleId = btn.getAttribute('data-open-article');
+
+          if (action === 'external' && url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+            return;
+          }
+          openArticlePanel(articleId);
         });
       });
     }
@@ -990,38 +1022,29 @@
 
         const data = await res.json();
 
-        document.getElementById('siteName').textContent = data.site?.name || 'חדשות הציבור';
-        document.getElementById('siteTagline').textContent = data.site?.tagline || 'חדשות, קהילה, עדכונים וכתבות';
+        const headlineRefreshMinutes = data.refreshPolicy?.headlineRefreshMinutes || DEFAULT_HEADLINE_REFRESH_MINUTES;
+        const contentRefreshMinutes = data.refreshPolicy?.contentRefreshMinutes || DEFAULT_CONTENT_REFRESH_MINUTES;
+
+        document.getElementById('siteName').textContent = data.siteName || 'חדשות הציבור';
+        document.getElementById('siteTagline').textContent = data.siteTagline || 'חדשות, קהילה, עדכונים וכתבות';
         document.getElementById('lastUpdated').textContent = 'עדכון אחרון: ' + formatDate(data.updatedAt);
 
-        const sourceArticles = (data.articles || []).filter(item => item && item.id);
-        const displayArticles = pickDisplayArticles(sourceArticles, cycleIndex * ROTATE_CHUNK, DISPLAY_ARTICLES);
-        const mainHeadline = sourceArticles.length
-          ? sourceArticles[(cycleIndex * ROTATE_CHUNK) % sourceArticles.length]
-          : data.mainHeadline;
+        const sourceItems = sortByPublishedAtDesc((data.items || []).filter(item => item && item.id));
+        const mainHeadline = sourceItems[0] || null;
+        const secondaryHeadlines = sourceItems.slice(1, 3);
+        const gridItems = sourceItems.slice(3);
 
-        const usedMainId = mainHeadline?.id;
-        const secondaryFromRotation = displayArticles
-          .filter(item => item.id !== usedMainId)
-          .slice(0, 2);
-        const secondaryHeadlines = secondaryFromRotation.length
-          ? secondaryFromRotation
-          : (data.secondaryHeadlines || []).slice(0, 2);
-
-        const allArticles = [
-          ...(mainHeadline ? [mainHeadline] : []),
-          ...secondaryHeadlines,
-          ...displayArticles
-        ].filter(item => item && item.id);
-
-        articleMap = new Map(allArticles.map(item => [item.id, item]));
+        articleMap = new Map(sourceItems.map(item => [item.id, item]));
 
         renderMainHeadline(mainHeadline);
         renderSecondaryHeadlines(secondaryHeadlines);
-        renderArticles(displayArticles);
-        renderTicker(displayArticles, data.bulletins || []);
+        renderArticles(gridItems);
+        renderTicker(sourceItems);
         attachArticleActions();
-        cycleIndex += 1;
+
+        const refreshIntervalMs = Math.max(1, Math.min(headlineRefreshMinutes, contentRefreshMinutes)) * 60 * 1000;
+        window.clearInterval(window.__newsRefreshInterval);
+        window.__newsRefreshInterval = window.setInterval(loadNews, refreshIntervalMs);
       } catch (err) {
         console.error('שגיאה בטעינת news.json', err);
 
@@ -1041,7 +1064,6 @@
     updateClock();
     setInterval(updateClock, 30000);
     loadNews();
-    setInterval(loadNews, REFRESH_INTERVAL_MS);
     panelClose.addEventListener('click', closeArticlePanel);
     articlePanel.addEventListener('click', (event) => {
       if (event.target === articlePanel) closeArticlePanel();
@@ -1052,5 +1074,6 @@
       }
     });
   </script>
+
 </body>
 </html>
