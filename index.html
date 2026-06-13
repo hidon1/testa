@@ -1,565 +1,966 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="מוצרלה - חנות מוצרים איכותיים במחירים מעולים. משלוחים מהירים לכל הארץ.">
-    <meta property="og:title" content="מוצרלה - חנות מוצרים איכותיים">
-    <meta property="og:description" content="גלו את מגוון המוצרים האיכותיים שלנו במחירים הכי טובים">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://picsum.photos/id/1015/1200/630">
-    <title>מוצרלה - חנות מוצרים איכותיים</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600&amp;family=Rubik:wght@500;600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+    <title>ניהול הזמנות מתקדם | שוק ארבעת המינים</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&family=Tinos:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
-            --primary: #6d28d9;
-            --primary-dark: #5b21b6;
-            --accent: #f59e0b;
-            --text: #1e2937;
-            --light: #f8fafc;
-            --gray: #64748b;
+            --primary-dark: #1b4332;
+            --primary-light: #2d6a4f;
+            --gold: #d4af37;
+            --gold-hover: #bda032;
+            --accent-bg: #f9f6f0;
+            --text-dark: #222222;
+            --text-light: #ffffff;
+            --gray-light: #e8e8e8;
+            --danger: #d90429;
+            --danger-hover: #b3001b;
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-elegant: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Assistant', sans-serif;
+        }
+
         body {
-            font-family: 'Heebo', sans-serif;
-            color: var(--text);
-            line-height: 1.6;
-            background: #f8fafc;
+            background-color: #f8fafc;
+            color: var(--text-dark);
+            padding: 30px 20px;
+            line-height: 1.5;
         }
 
-        .container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 24px; }
-
-        /* Navbar */
-        nav {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            background: rgba(255,255,255,0.97);
-            backdrop-filter: blur(16px);
-            z-index: 1100;
-            border-bottom: 1px solid rgba(109,40,217,0.1);
-            transition: all 0.3s;
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
         }
 
-        .nav-content {
+        header {
+            background: linear-gradient(135deg, var(--primary-dark), #143225);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-elegant);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 78px;
+            margin-bottom: 25px;
+            border-bottom: 4px solid var(--gold);
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        .logo {
-            font-family: 'Rubik', sans-serif;
-            font-size: 30px;
-            font-weight: 700;
-            background: linear-gradient(90deg, #6d28d9, #c026d3);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        header h1 {
+            font-family: 'Tinos', serif;
+            font-size: 2rem;
+            color: var(--gold);
             display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 38px;
-            list-style: none;
-            font-weight: 500;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text);
-            position: relative;
-        }
-
-        .nav-links a:after {
-            content: '';
-            position: absolute;
-            bottom: -6px; left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            transition: width 0.3s;
-        }
-
-        .nav-links a:hover:after { width: 100%; }
-
-        .cart-button {
-            position: relative;
-            width: 52px; height: 52px;
-            background: white;
-            border: 2px solid #e0e7ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            color: var(--primary);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .cart-button:hover {
-            transform: scale(1.1);
-            border-color: var(--primary);
-        }
-
-        .cart-count {
-            position: absolute;
-            top: -6px; right: -6px;
-            background: #f59e0b;
-            color: white;
-            font-size: 13px;
-            font-weight: 700;
-            min-width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 0 3px white;
-        }
-
-        /* Hero */
-        .hero {
-            height: 100vh;
-            min-height: 700px;
-            background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
-            display: flex;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: url('https://picsum.photos/id/1015/2000/1200') center/cover;
-            opacity: 0.15;
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 2;
-            max-width: 680px;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 10px 24px;
-            border-radius: 50px;
-            backdrop-filter: blur(10px);
-            margin-bottom: 20px;
-        }
-
-        .hero h1 {
-            font-size: clamp(2.8rem, 5.5vw, 4.5rem);
-            font-weight: 700;
-            color: white;
-            line-height: 1.1;
-            margin-bottom: 24px;
-        }
-
-        .hero p {
-            font-size: 1.35rem;
-            color: rgba(255,255,255,0.9);
-            margin-bottom: 40px;
-        }
-
-        .cta-button {
-            background: white;
-            color: #4c1d95;
-            padding: 18px 46px;
-            border-radius: 50px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 15px 35px rgba(109,40,217,0.3);
-            transition: all 0.4s;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-6px);
-        }
-
-        /* Products Section */
-        .products-section {
-            padding: 130px 0 100px;
-            background: var(--light);
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .section-header h2 {
-            font-size: 2.8rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, #6d28d9, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Motzarella Widget Container */
-        #motzarella-store {
-            width: 100%;
-        }
-
-        /* Cart Drawer */
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 1999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s;
-        }
-
-        .overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .cart-drawer {
-            position: fixed;
-            top: 0;
-            right: -440px;
-            width: 440px;
-            height: 100vh;
-            background: white;
-            box-shadow: -15px 0 40px rgba(0,0,0,0.2);
-            z-index: 2000;
-            transition: right 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .cart-drawer.open { right: 0; }
-
-        .cart-header {
-            padding: 24px 28px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f8fafc;
-        }
-
-        .cart-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .cart-item {
-            display: flex;
-            gap: 16px;
-            padding: 16px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .cart-item img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 12px;
-        }
-
-        .cart-total {
-            padding: 24px;
-            background: #f8fafc;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        /* Toast */
-        #toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e2937;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 9999px;
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.15);
-            display: none;
             align-items: center;
             gap: 12px;
-            z-index: 9999;
-            font-weight: 500;
         }
 
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .cart-drawer { width: 100%; right: -100%; }
+        .header-stats-embedded {
+            display: flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            font-size: 1rem;
+        }
+
+        .header-stats-embedded span strong {
+            color: var(--gold);
+            font-size: 1.15rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:disabled {
+            background-color: #cbd5e1 !important;
+            color: #64748b !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+        }
+
+        .btn-primary {
+            background-color: var(--gold);
+            color: var(--primary-dark);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--gold-hover);
+        }
+
+        .btn-success {
+            background-color: #2a9d8f;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background-color: #218376;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #5a6268;
+        }
+
+        .btn-edit-mode {
+            background-color: #4a5568;
+            color: white;
+        }
+
+        .btn-edit-mode.active {
+            background-color: #e2e8f0;
+            color: #1a202c;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+            border: 2px solid var(--gold);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: var(--danger-hover);
+        }
+
+        .filter-card {
+            background: white;
+            padding: 22px;
+            border-radius: 14px;
+            box-shadow: var(--shadow-elegant);
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .form-control {
+            padding: 11px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: var(--transition-smooth);
+            background-color: #f8fafc;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-light);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+        }
+
+        .table-responsive {
+            background: white;
+            border-radius: 14px;
+            box-shadow: var(--shadow-elegant);
+            overflow: hidden;
+            border: 1px solid var(--gray-light);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background-color: var(--accent-bg);
+            color: var(--primary-dark);
+            padding: 16px;
+            font-weight: 700;
+            font-size: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        body.edit-mode-active tbody tr {
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+
+        body.edit-mode-active tbody tr:hover {
+            background-color: #fef8e7;
+            box-shadow: inset 4px 0 0 var(--gold);
+        }
+
+        .badge-shipping {
+            background-color: #f1f5f9;
+            color: #334155;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .badge-shipping.delivery {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .items-list {
+            list-style: none;
+            font-size: 0.88rem;
+            color: #334155;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-window {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 95%;
+            max-width: 750px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: var(--transition-smooth);
+        }
+
+        .close-modal:hover {
+            color: var(--text-dark);
+        }
+
+        .order-summary-box {
+            background: var(--accent-bg);
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+            display: flex;
+            justify-content: space-between;
+            border: 1px dashed var(--gold);
+        }
+
+        .edit-notice-banner {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+            font-size: 0.95rem;
+        }
+
+        body.edit-mode-active .edit-notice-banner {
+            display: block;
         }
     </style>
 </head>
+
 <body>
 
-    <!-- Navbar -->
-    <nav id="navbar">
-        <div class="container nav-content">
-            <div class="logo">
-                <i class="fas fa-cheese"></i>
-                מוצרלה
-            </div>
-            
-            <ul class="nav-links">
-                <li><a href="#home">בית</a></li>
-                <li><a href="#products">חנות</a></li>
-                <li><a href="#about">אודות</a></li>
-            </ul>
-            
-            <button onclick="toggleCart()" class="cart-button" aria-label="עגלת קניות">
-                <i class="fas fa-shopping-cart"></i>
-                <span id="cart-count" class="cart-count">0</span>
-            </button>
-        </div>
-    </nav>
+    <div class="dashboard-container">
+        <header>
+            <h1><i class="fa-solid fa-layer-group"></i> מרכז בקרה</h1>
 
-    <!-- Hero -->
-    <section id="home" class="hero">
-        <div class="container" style="position:relative;z-index:2;">
-            <div class="hero-content">
-                <div class="hero-badge">
-                    <i class="fas fa-fire"></i>
-                    <span>מבצעים חמים עכשיו</span>
-                </div>
-                <h1>מוצרים איכותיים<br>במחירים שווים לכל נפש</h1>
-                <p>חנות מוצרלה – כל מה שאתם צריכים, במקום אחד, עם משלוח מהיר.</p>
-                <button onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})" 
-                        class="cta-button">
-                    <i class="fas fa-store"></i>
-                    <span>לצפות במוצרים</span>
+            <div class="header-stats-embedded">
+                <span>הזמנות: <strong id="headerTotalOrders">0</strong></span>
+                <span>פדיון: <strong id="headerTotalRevenue">₪0</strong></span>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="openRecycleBinModal()">
+                    <i class="fa-solid fa-trash-arrow-up"></i> סל מחזור (<span id="recycleBinCount">0</span>)
+                </button>
+                <button class="btn btn-success" onclick="exportToExcel()">
+                    <i class="fa-solid fa-file-excel"></i> ייצוא לאקסל
+                </button>
+                <button id="editModeToggleBtn" class="btn btn-edit-mode" onclick="toggleEditMode()">
+                    <i class="fa-solid fa-pen-to-square"></i> מצב עריכה: <span id="editModeStatusText">כבוי</span>
+                </button>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="fa-solid fa-plus"></i> הוספה ידנית
                 </button>
             </div>
-        </div>
-    </section>
+        </header>
 
-    <!-- Products Section -->
-    <section id="products" class="products-section">
-        <div class="container">
-            <div class="section-header">
-                <h2>המוצרים שלנו</h2>
-                <p>כל המוצרים נבחרים בקפידה ומגיעים עם אחריות ושירות לקוחות מעולה</p>
-            </div>
-            
-            <!-- כאן נטען הווידג'ט של מוצרלה -->
-            <div id="motzarella-store" data-uid="BawTvhtb66c7eWTGjajP7LJWfxP2"></div>
+        <div class="edit-notice-banner">
+            <i class="fa-solid fa-info-circle"></i> <strong>מצב עריכה פעיל:</strong> לחץ על שורה כלשהי בטבלה כדי לעדכן
+            נתונים או למחוק את ההזמנה.
         </div>
-    </section>
 
-    <!-- About -->
-    <section id="about" style="padding: 110px 0; background: white;">
-        <div class="container">
-            <div style="max-width: 760px; margin: 0 auto; text-align: center;">
-                <h2 style="font-size: 2.6rem; margin-bottom: 20px;">למה לבחור במוצרלה?</h2>
-                <p style="font-size: 1.25rem; color: var(--gray);">
-                    איכות ללא פשרות, מחירים הוגנים, משלוח מהיר ושירות לקוחות זמין 7 ימים בשבוע.
-                </p>
+        <section class="filter-card">
+            <div class="form-group">
+                <label>חיפוש מהיר (שם / טלפון / מייל / מזהה)</label>
+                <input type="text" id="searchFilter" class="form-control" placeholder="הקלד פרטי לקוח..." oninput="applyFilters()">
             </div>
-        </div>
-    </section>
+            <div class="form-group">
+                <label>עיר מגורים</label>
+                <input type="text" id="cityFilter" class="form-control" placeholder="כל הערים" oninput="applyFilters()">
+            </div>
+            <div class="form-group">
+                <label>סכום הזמנה מינימלי</label>
+                <input type="number" id="minPriceFilter" class="form-control" placeholder="₪0" oninput="applyFilters()">
+            </div>
+            <div class="form-group">
+                <label>אופן קבלה</label>
+                <select id="shippingFilter" class="form-control" onchange="applyFilters()">
+                    <option value="all">כל האפשרויות</option>
+                    <option value="איסוף עצמי">איסוף עצמי</option>
+                    <option value="משלוח">משלוח ממוזג</option>
+                </select>
+            </div>
+        </section>
 
-    <!-- Footer -->
-    <footer style="background:#0f172a; color:#cbd5e1; padding: 80px 0 40px; text-align:center;">
-        <div class="container">
-            <div class="logo" style="color:white; font-size:28px; margin-bottom:16px;">
-                <i class="fas fa-cheese"></i> מוצרלה
-            </div>
-            <p style="opacity:0.6;">© 2025 מוצרלה - כל הזכויות שמורות</p>
-        </div>
-    </footer>
+        <section class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>מזהה מערכת</th>
+                        <th>תאריך ושעה</th>
+                        <th>שם הלקוח</th>
+                        <th>מספר טלפון</th>
+                        <th>כתובת מלאה ומייל</th>
+                        <th>פירוט סחורה</th>
+                        <th>אופן קבלה</th>
+                        <th>הערות</th>
+                        <th>סכום סופי</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: #64748b;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים מאובטחים מ-Firebase...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
 
-    <!-- Cart Drawer -->
-    <div id="overlay" class="overlay" onclick="toggleCart()"></div>
-    
-    <div id="cart-drawer" class="cart-drawer">
-        <div class="cart-header">
-            <h3><i class="fas fa-shopping-cart"></i> העגלה שלי</h3>
-            <button onclick="toggleCart()" style="font-size:2rem;background:none;border:none;cursor:pointer;">×</button>
-        </div>
-        
-        <div id="cart-body" class="cart-body"></div>
-        
-        <div class="cart-total">
-            <div style="display:flex;justify-content:space-between;font-size:1.35rem;font-weight:600;margin-bottom:20px;">
-                <span>סה"כ:</span>
-                <span id="cart-total">0 ₪</span>
-            </div>
-            <button onclick="checkout()" 
-                    style="width:100%;padding:18px;background:var(--primary);color:white;border:none;border-radius:50px;font-size:1.2rem;font-weight:600;cursor:pointer;">
-                המשך לתשלום
-            </button>
+    <div class="modal-overlay" id="orderFormModal">
+        <div class="modal-window">
+            <button class="close-modal" onclick="closeFormModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="modalTitle" style="color: var(--primary-dark); margin-bottom: 25px; font-family: 'Tinos', serif;">
+                הוספת הזמנה חדשה</h2>
+
+            <form id="orderForm" onsubmit="handleFormSubmit(event)">
+                <input type="hidden" id="formDocId">
+                <input type="hidden" id="formOrderId">
+                <input type="hidden" id="formOriginalDate">
+                <input type="hidden" id="formOriginalItems">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>שם הלקוח *</label>
+                        <input type="text" id="fName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>מספר טלפון *</label>
+                        <input type="tel" id="fPhone" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>כתובת אימייל (מייל)</label>
+                    <input type="email" id="fEmail" class="form-control" placeholder="example@domain.com">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>עיר *</label>
+                    <input type="text" id="fCity" class="form-control" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>רחוב</label>
+                        <input type="text" id="fStreet" class="form-control" placeholder="שם הרחוב">
+                    </div>
+                    <div class="form-group">
+                        <label>מס' בית</label>
+                        <input type="text" id="fHouseNum" class="form-control" placeholder="בית">
+                    </div>
+                    <div class="form-group">
+                        <label>מס' דירה</label>
+                        <input type="text" id="fApartmentNum" class="form-control" placeholder="דירה">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>אופן קבלת ההזמנה</label>
+                        <select id="fShipping" class="form-control" onchange="calculateFormTotal()">
+                            <option value="איסוף עצמי">איסוף עצמי (₪0)</option>
+                            <option value="משלוח">משלוח ממוזג (₪35)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>סכום הפריטים נטו (₪) *</label>
+                        <input type="number" id="fItemsPrice" class="form-control" required oninput="calculateFormTotal()">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>פירוט חופשי של הסחורה והכמויות</label>
+                    <textarea id="fItemsText" class="form-control" rows="3" placeholder="לדוגמא: 3 סטים מהודרים..."></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>הערות מנהל / דרישות מיוחדות</label>
+                    <input type="text" id="fNotes" class="form-control">
+                </div>
+
+                <div class="order-summary-box">
+                    <span>חישוב סופי משוער (כולל שילוח):</span>
+                    <span id="fTotalLabel">₪0</span>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 25px;">
+                    <button type="submit" id="formSubmitBtn" class="btn btn-primary" style="flex-grow: 1; justify-content: center;">
+                        <i class="fa-solid fa-floppy-disk"></i> שמור שינויים במערכת
+                    </button>
+                    <button type="button" id="deleteOrderBtn" class="btn btn-danger" onclick="deleteCurrentOrder()">
+                        <i class="fa-solid fa-trash-can"></i> מחק הזמנה לסל מחזור
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Toast -->
-    <div id="toast">
-        <i class="fas fa-check-circle" style="color:#22c55e;"></i>
-        <span id="toast-text"></span>
+    <div class="modal-overlay" id="recycleBinModal">
+        <div class="modal-window" style="max-width: 850px;">
+            <button class="close-modal" onclick="closeRecycleBinModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="color: var(--danger); margin-bottom: 25px; font-family: 'Tinos', serif;">
+                <i class="fa-solid fa-trash-can"></i> סל מחזור - הזמנות שנמחקו
+            </h2>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>מזהה</th>
+                            <th>שם לקוח</th>
+                            <th>עיר</th>
+                            <th>סכום</th>
+                            <th>פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recycleBinTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-<!-- שלב 1: מקם איפה שרוצים שהחנות תופיע -->
-<div id="motzarella-store" data-uid="BawTvhtb66c7eWTGjajP7LJWfxP2"></div>
 
-<!-- שלב 2: הדבק לפני סוף תגית </body> -->
-<script src="https://mozzarella.click/widget.js"></script>
-    <!-- ====================== מוצרלה ווידג'ט ====================== -->
-    <script src="https://mozzarella.click/widget.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBG8ZiYOdVdI45AsKnMcbX6QaVlkU4dXhM",
+            authDomain: "etrog-d0bcb.firebaseapp.com",
+            projectId: "etrog-d0bcb",
+            storageBucket: "etrog-d0bcb.firebasestorage.app",
+            messagingSenderId: "215951557108",
+            appId: "1:215951557108:web:8531faf1b1e512822d79a1",
+            measurementId: "G-PYV7B8N2M3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.allOrders = [];
+
+        const q = query(collection(db, "orders"), orderBy("date", "desc"));
+        onSnapshot(q, (snapshot) => {
+            window.allOrders = [];
+            snapshot.forEach((snapshotDoc) => {
+                window.allOrders.push({ _docId: snapshotDoc.id, ...snapshotDoc.data() });
+            });
+            applyFilters();
+        }, (error) => {
+            console.error("שגיאה במשיכת נתונים: ", error);
+        });
+
+        window.fbAddOrder = async (data) => await addDoc(collection(db, "orders"), data);
+        window.fbUpdateOrder = async (id, data) => await updateDoc(doc(db, "orders", id), data);
+        window.fbDeleteOrder = async (id) => await deleteDoc(doc(db, "orders", id));
+    </script>
 
     <script>
-        let cart = [];
+        let isEditMode = false;
+        let currentFilteredOrders = [];
+        let recycleBin = [];
 
-        // ====================== עזרים ======================
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-text').textContent = message;
-            toast.style.display = 'flex';
-            setTimeout(() => toast.style.display = 'none', 2800);
-        }
-
-        function updateCartCount() {
-            let count = cart.reduce((sum, item) => sum + (item.qty || 1), 0);
-            document.getElementById('cart-count').textContent = count;
-        }
-
-        function saveCart() {
-            localStorage.setItem('motzarella_cart', JSON.stringify(cart));
-        }
-
-        function loadCart() {
-            const saved = localStorage.getItem('motzarella_cart');
-            if (saved) {
-                cart = JSON.parse(saved);
-                updateCartCount();
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('editModeToggleBtn');
+            const statusText = document.getElementById('editModeStatusText');
+            
+            if (isEditMode) {
+                document.body.classList.add('edit-mode-active');
+                btn.classList.add('active');
+                statusText.innerText = "פעיל (לחץ על שורה)";
+            } else {
+                document.body.classList.remove('edit-mode-active');
+                btn.classList.remove('active');
+                statusText.innerText = "כבוי";
             }
         }
 
-        // ====================== סל קניות ======================
-        function addToCart(product, quantity = 1, selectedVariants = {}) {
-            const key = product.id + JSON.stringify(selectedVariants);
-            const existing = cart.find(item => item.key === key);
+        function openAddModal() {
+            document.getElementById('modalTitle').innerText = "הוספת הזמנה ידנית חדשה";
+            document.getElementById('orderForm').reset();
+            document.getElementById('formDocId').value = '';
+            document.getElementById('formOrderId').value = '';
+            document.getElementById('formOriginalDate').value = '';
+            document.getElementById('formOriginalItems').value = '';
             
-            if (existing) {
-                existing.qty = (existing.qty || 1) + quantity;
-            } else {
-                cart.push({ key, product, qty: quantity, variants: selectedVariants });
-            }
-            
-            saveCart();
-            updateCartCount();
-            showToast(`${product.name} נוסף לעגלה`);
+            const deleteBtn = document.getElementById('deleteOrderBtn');
+            deleteBtn.style.display = 'none';
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i> מחק הזמנה לסל מחזור`;
+
+            const submitBtn = document.getElementById('formSubmitBtn');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> שמור שינויים במערכת`;
+
+            document.getElementById('fTotalLabel').innerText = "₪0";
+            document.getElementById('orderFormModal').classList.add('active');
         }
 
-        function renderCart() {
-            const container = document.getElementById('cart-body');
-            let html = '';
-            let total = 0;
-
-            if (cart.length === 0) {
-                html = `<p style="text-align:center;padding:60px 20px;color:#64748b;">העגלה שלך ריקה...</p>`;
+        function openEditModal(order) {
+            document.getElementById('modalTitle').innerText = `עריכת הזמנה: ${order.orderId}`;
+            document.getElementById('formDocId').value = order._docId;
+            document.getElementById('formOrderId').value = order.orderId;
+            document.getElementById('formOriginalDate').value = order.date || '';
+            document.getElementById('formOriginalItems').value = JSON.stringify(order.items || '');
+            
+            document.getElementById('fName').value = order.customer?.name || '';
+            document.getElementById('fPhone').value = order.customer?.phone || '';
+            document.getElementById('fEmail').value = order.customer?.email || '';
+            document.getElementById('fCity').value = order.customer?.city || '';
+            document.getElementById('fStreet').value = order.customer?.street || '';
+            document.getElementById('fHouseNum').value = order.customer?.houseNum || '';
+            document.getElementById('fApartmentNum').value = order.customer?.apartmentNum || '';
+            
+            document.getElementById('fShipping').value = order.shippingMethod || 'איסוף עצמי';
+            document.getElementById('fNotes').value = order.customer?.notes || '';
+            
+            if (Array.isArray(order.items)) {
+                document.getElementById('fItemsText').value = order.items.map(i => `${i.name} (כמות: ${i.qty})`).join(', ');
             } else {
-                cart.forEach((item, index) => {
-                    const price = item.product.saleActive && item.product.salePrice ? 
-                                  item.product.salePrice : item.product.price;
-                    const itemTotal = price * (item.qty || 1);
-                    total += itemTotal;
+                document.getElementById('fItemsText').value = order.manualItemsDescription || '';
+            }
 
-                    html += `
-                        <div class="cart-item">
-                            <img src="${item.product.imageUrl}" alt="${item.product.name}">
-                            <div style="flex:1">
-                                <div style="font-weight:600;">${item.product.name}</div>
-                                ${item.variants && Object.keys(item.variants).length ? 
-                                    `<small style="color:#64748b;">${Object.values(item.variants).join(', ')}</small>` : ''}
-                                <div style="margin-top:8px;font-weight:700;color:var(--primary);">
-                                    ${price} ₪ × ${item.qty || 1}
-                                </div>
-                            </div>
-                            <div style="text-align:left;">
-                                <div style="font-weight:700;">${itemTotal} ₪</div>
-                                <button onclick="removeFromCart(${index})" style="margin-top:12px;color:#ef4444;background:none;border:none;cursor:pointer;">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>`;
+            const shippingCost = order.shippingMethod === 'משלוח' ? 35 : 0;
+            const itemsNetPrice = (order.totalPrice || 0) - shippingCost;
+            document.getElementById('fItemsPrice').value = itemsNetPrice >= 0 ? itemsNetPrice : 0;
+
+            const deleteBtn = document.getElementById('deleteOrderBtn');
+            deleteBtn.style.display = 'inline-flex';
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i> מחק הזמנה לסל מחזור`;
+            
+            const submitBtn = document.getElementById('formSubmitBtn');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> שמור שינויים במערכת`;
+
+            calculateFormTotal();
+            document.getElementById('orderFormModal').classList.add('active');
+        }
+
+        function closeFormModal() {
+            document.getElementById('orderFormModal').classList.remove('active');
+        }
+
+        function calculateFormTotal() {
+            const itemsPrice = parseFloat(document.getElementById('fItemsPrice').value) || 0;
+            const shipping = document.getElementById('fShipping').value;
+            const total = itemsPrice + (shipping === 'משלוח' ? 35 : 0);
+            document.getElementById('fTotalLabel').innerText = `₪${total}`;
+        }
+
+        function convertToIsraelTime(isoString) {
+            if(!isoString) return '-';
+            try {
+                return new Date(isoString).toLocaleString('he-IL', {
+                    timeZone: 'Asia/Jerusalem',
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit'
                 });
+            } catch (e) { return isoString; }
+        }
+
+        function applyFilters() {
+            const tbody = document.getElementById('ordersTableBody');
+            if (!window.allOrders || window.allOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #64748b;">אין רשומות קיימות.</td></tr>`;
+                updateDashboardKPIs(0, 0);
+                currentFilteredOrders = [];
+                return;
             }
 
-            container.innerHTML = html;
-            document.getElementById('cart-total').textContent = total + ' ₪';
-        }
+            const search = document.getElementById('searchFilter').value.toLowerCase();
+            const city = document.getElementById('cityFilter').value.toLowerCase();
+            const minPrice = parseFloat(document.getElementById('minPriceFilter').value) || 0;
+            const shipping = document.getElementById('shippingFilter').value;
 
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            saveCart();
-            updateCartCount();
-            renderCart();
-        }
+            currentFilteredOrders = window.allOrders.filter(o => {
+                const searchMatch = search === '' || 
+                    o.customer?.name?.toLowerCase().includes(search) || 
+                    o.customer?.phone?.includes(search) || 
+                    o.customer?.email?.toLowerCase().includes(search) ||
+                    o.orderId?.toLowerCase().includes(search);
+                const cityMatch = city === '' || o.customer?.city?.toLowerCase().includes(city);
+                const priceMatch = (o.totalPrice || 0) >= minPrice;
+                const shippingMatch = shipping === 'all' || o.shippingMethod === shipping;
 
-        function toggleCart() {
-            const drawer = document.getElementById('cart-drawer');
-            const overlay = document.getElementById('overlay');
-            
-            if (drawer.classList.contains('open')) {
-                drawer.classList.remove('open');
-                overlay.classList.remove('show');
-            } else {
-                renderCart();
-                drawer.classList.add('open');
-                overlay.classList.add('show');
+                return searchMatch && cityMatch && priceMatch && shippingMatch;
+            });
+
+            let totalRevenue = currentFilteredOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+            updateDashboardKPIs(currentFilteredOrders.length, totalRevenue);
+
+            tbody.innerHTML = '';
+            if(currentFilteredOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #64748b;">לא נמצאו רשומות תואמות.</td></tr>`;
+                return;
             }
-        }
 
-        function checkout() {
-            if (cart.length === 0) return;
-            showToast('מעבירים אותך לתשלום...');
-            setTimeout(() => {
-                alert('✅ תודה על הרכישה!\n(זהו אתר הדגמה - במערכת אמיתית הייתה נפתחת כאן עמוד תשלום)');
-                cart = [];
-                saveCart();
-                updateCartCount();
-                toggleCart();
-            }, 1000);
-        }
+            currentFilteredOrders.forEach(o => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => { if (isEditMode) openEditModal(o); };
 
-        // ====================== האזנה לאירועי הווידג'ט ======================
-        function setupWidgetListener() {
-            window.addEventListener('motzarella:add-to-cart', function(e) {
-                const { product, quantity = 1, selectedVariants = {} } = e.detail;
-                if (product) {
-                    addToCart(product, quantity, selectedVariants);
+                let itemsHtml = '<ul class="items-list">';
+                if (Array.isArray(o.items)) {
+                    o.items.forEach(i => { itemsHtml += `<li>• ${i.name} (${i.qty})</li>`; });
+                } else {
+                    itemsHtml += `<li>${o.manualItemsDescription || 'הזמנה כללית'}</li>`;
                 }
+                itemsHtml += '</ul>';
+
+                const shippingClass = o.shippingMethod === 'משלוח' ? 'badge-shipping delivery' : 'badge-shipping';
+
+                let addressParts = [];
+                if(o.customer?.street) addressParts.push(`רחוב ${o.customer.street}`);
+                if(o.customer?.houseNum) addressParts.push(`בית ${o.customer.houseNum}`);
+                if(o.customer?.apartmentNum) addressParts.push(`דירה ${o.customer.apartmentNum}`);
+                const fullAddressStr = addressParts.join(', ');
+
+                tr.innerHTML = `
+                    <td style="font-weight:700; color:var(--primary-dark); font-size:0.9rem;">${o.orderId || '-'}</td>
+                    <td style="white-space:nowrap; direction:ltr; text-align:right; font-size:0.85rem;">${convertToIsraelTime(o.date)}</td>
+                    <td style="font-weight:600;">${o.customer?.name || '-'}</td>
+                    <td>${o.customer?.phone || '-'}</td>
+                    <td>
+                        <span style="font-weight:600;">${o.customer?.city || ''}</span>
+                        ${fullAddressStr ? '<br><span style="font-size:0.8rem;color:#475569;">' + fullAddressStr + '</span>' : ''}
+                        ${o.customer?.email ? '<br><span style="font-size:0.8rem;color:#0284c7;direction:ltr;display:inline-block;">' + o.customer.email + '</span>' : ''}
+                    </td>
+                    <td>${itemsHtml}</td>
+                    <td><span class="${shippingClass}">${o.shippingMethod || 'איסוף עצמי'}</span></td>
+                    <td style="font-size:0.85rem; color:#64748b; max-width:150px; overflow:hidden; text-overflow:ellipsis;">${o.customer?.notes || '-'}</td>
+                    <td style="font-weight:800; color:var(--primary-light); font-size:1.1rem;">₪${o.totalPrice || 0}</td>
+                `;
+                tbody.appendChild(tr);
             });
         }
 
-        // ====================== אתחול ======================
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCart();
-            setupWidgetListener();
+        function updateDashboardKPIs(count, revenue) {
+            document.getElementById('headerTotalOrders').innerText = count;
+            document.getElementById('headerTotalRevenue').innerText = `₪${revenue.toLocaleString()}`;
+        }
+
+        // שמירה/עדכון בענן - נעילה, שליחה, וסגירה מיידית
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const submitBtn = document.getElementById('formSubmitBtn');
             
-            // אפקט גלילה לניווט
-            window.addEventListener('scroll', () => {
-                document.getElementById('navbar').style.boxShadow = 
-                    window.scrollY > 50 ? '0 4px 20px rgba(0,0,0,0.08)' : 'none';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מבצע פעולה בענן...`;
+
+            const docId = document.getElementById('formDocId').value;
+            const existingOrderId = document.getElementById('formOrderId').value;
+            const originalItemsStr = document.getElementById('formOriginalItems').value;
+            
+            const name = document.getElementById('fName').value;
+            const phone = document.getElementById('fPhone').value;
+            const email = document.getElementById('fEmail').value;
+            const city = document.getElementById('fCity').value;
+            const street = document.getElementById('fStreet').value;
+            const houseNum = document.getElementById('fHouseNum').value;
+            const apartmentNum = document.getElementById('fApartmentNum').value;
+            
+            const shipping = document.getElementById('fShipping').value;
+            const itemsPrice = parseFloat(document.getElementById('fItemsPrice').value) || 0;
+            const manualItemsDescription = document.getElementById('fItemsText').value;
+            const notes = document.getElementById('fNotes').value;
+            
+            const total = itemsPrice + (shipping === 'משלוח' ? 35 : 0);
+
+            try {
+                if (docId) {
+                    let parsedItems = null;
+                    try { if(originalItemsStr) parsedItems = JSON.parse(originalItemsStr); } catch(e){}
+
+                    const updatedData = {
+                        customer: { name, phone, email, city, street, houseNum, apartmentNum, notes },
+                        manualItemsDescription: manualItemsDescription,
+                        shippingMethod: shipping,
+                        totalPrice: total
+                    };
+                    if(parsedItems) updatedData.items = parsedItems;
+                    
+                    if (window.fbUpdateOrder) {
+                        await window.fbUpdateOrder(docId, updatedData);
+                        closeFormModal(); // סגירה מיידית וחזרה למסך הראשי
+                        alert(`ההזמנה ${existingOrderId} עודכנה בהצלחה!`);
+                    }
+                } else {
+                    const newOrderId = 'MANUAL-' + Math.floor(100000 + Math.random() * 900000);
+                    const newOrder = {
+                        orderId: newOrderId,
+                        customer: { name, phone, email, city, street, houseNum, apartmentNum, notes },
+                        manualItemsDescription: manualItemsDescription || "הזמנה מנהל ידנית",
+                        shippingMethod: shipping,
+                        totalPrice: total,
+                        date: new Date().toISOString()
+                    };
+
+                    if (window.fbAddOrder) {
+                        await window.fbAddOrder(newOrder);
+                        closeFormModal(); // סגירה מיידית וחזרה למסך הראשי
+                        alert(`הזמנה חדשה ${newOrderId} נוצרה בהצלחה!`);
+                    }
+                }
+            } catch (error) {
+                console.error("שגיאה בשמירת הנתונים: ", error);
+                alert("התרחשה שגיאה בעת הניסיון לשמור בענן. נסה שנית.");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> שמור שינויים במערכת`;
+            }
+        }
+
+        // מחיקה - נעילה, שליחה לענן וסגירה מיידית
+        async function deleteCurrentOrder() {
+            const docId = document.getElementById('formDocId').value;
+            const orderId = document.getElementById('formOrderId').value;
+            
+            if (!docId) return;
+
+            const confirmDelete = confirm(`האם להעביר את הזמנה ${orderId} לסל המחזור?`);
+            if (confirmDelete) {
+                const deleteBtn = document.getElementById('deleteOrderBtn');
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מוחק...`;
+
+                const fullOrderData = window.allOrders.find(o => o._docId === docId);
+                if (fullOrderData) {
+                    recycleBin.push(fullOrderData);
+                    updateRecycleBinUI();
+                }
+
+                try {
+                    if (window.fbDeleteOrder) {
+                        await window.fbDeleteOrder(docId);
+                        closeFormModal(); // סגירה מיידית וחזרה למסך הראשי
+                        alert(`ההזמנה ${orderId} הועברה לסל המחזור.`);
+                    }
+                } catch (error) {
+                    console.error("שגיאה במחיקת ההזמנה: ", error);
+                    alert("פעולת המחיקה נכשלה. נסה שוב.");
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-trash-can"></i> מחק הזמנה לסל מחזור`;
+                }
+            }
+        }
+
+        function updateRecycleBinUI() {
+            document.getElementById('recycleBinCount').innerText = recycleBin.length;
+            const tbody = document.getElementById('recycleBinTableBody');
+            tbody.innerHTML = '';
+            
+            if(recycleBin.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color:#64748b;">סל המחזור ריק</td></tr>`;
+                return;
+            }
+
+            recycleBin.forEach((order, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${order.orderId}</td>
+                    <td>${order.customer?.name || '-'}</td>
+                    <td>${order.customer?.city || '-'}</td>
+                    <td>₪${order.totalPrice || 0}</td>
+                    <td>
+                        <button id="restoreBtn-${index}" class="btn btn-primary" style="padding: 5px 10px; font-size:0.8rem;" onclick="restoreOrder(${index})">
+                            <i class="fa-solid fa-trash-arrow-up"></i> שחזר
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // שחזור - נעילה, הוספה לענן וסגירה מיידית
+        async function restoreOrder(index) {
+            const restoreBtn = document.getElementById(`restoreBtn-${index}`);
+            if(restoreBtn) {
+                restoreBtn.disabled = true;
+                restoreBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> משחזר...`;
+            }
+
+            const orderToRestore = recycleBin[index];
+            const { _docId, ...cleanData } = orderToRestore; 
+
+            try {
+                if(window.fbAddOrder) {
+                    await window.fbAddOrder(cleanData);
+                    recycleBin.splice(index, 1);
+                    updateRecycleBinUI();
+                    closeRecycleBinModal(); // סגירה מיידית וחזרה למסך הראשי
+                    alert(`הזמנה ${cleanData.orderId} שוחזרה בהצלחה לפיירבייס!`);
+                }
+            } catch (error) {
+                console.error("שגיאה בשחזור רשומה: ", error);
+                alert("לא ניתן היה לשחזר לענן. אנא נסה שוב.");
+                if(restoreBtn) {
+                    restoreBtn.disabled = false;
+                    restoreBtn.innerHTML = `<i class="fa-solid fa-trash-arrow-up"></i> שחזר`;
+                }
+            }
+        }
+
+        function openRecycleBinModal() {
+            updateRecycleBinUI();
+            document.getElementById('recycleBinModal').classList.add('active');
+        }
+
+        function closeRecycleBinModal() {
+            document.getElementById('recycleBinModal').classList.remove('active');
+        }
+
+        function exportToExcel() {
+            if (currentFilteredOrders.length === 0) {
+                alert("אין נתונים זמינים לייצוא תחת הסינון הנוכחי.");
+                return;
+            }
+
+            let csvContent = "\uFEFF"; 
+            csvContent += "מזהה מערכת,תאריך,שם הלקוח,מספר טלפון,אימייל,עיר,רחוב,מספר בית,מספר דירה,אופן קבלה,הערות,סכום סופי\n";
+
+            currentFilteredOrders.forEach(o => {
+                const cleanName = (o.customer?.name || '-').replace(/"/g, '""');
+                const cleanPhone = (o.customer?.phone || '-').replace(/"/g, '""');
+                const cleanEmail = (o.customer?.email || '-').replace(/"/g, '""');
+                const cleanCity = (o.customer?.city || '-').replace(/"/g, '""');
+                const cleanStreet = (o.customer?.street || '-').replace(/"/g, '""');
+                const cleanHouse = (o.customer?.houseNum || '-').replace(/"/g, '""');
+                const cleanApartment = (o.customer?.apartmentNum || '-').replace(/"/g, '""');
+                const cleanNotes = (o.customer?.notes || '-').replace(/"/g, '""');
+                const dateStr = convertToIsraelTime(o.date).replace(/"/g, '""');
+
+                csvContent += `"${o.orderId || '-'}","${dateStr}","${cleanName}","${cleanPhone}","${cleanEmail}","${cleanCity}","${cleanStreet}","${cleanHouse}","${cleanApartment}","${o.shippingMethod || 'איסוף עצמי'}","${cleanNotes}",${o.totalPrice || 0}\n`;
             });
 
-            console.log('%c✅ אתר מוצרלה עם ווידג\'ט פעיל + סל קניות', 'color:#6d28d9;font-weight:600;font-size:14px');
-        });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `דוח_הזמנות_משודרג_${new Date().toLocaleDateString('he-IL').replace(/\./g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 </body>
+
 </html>
