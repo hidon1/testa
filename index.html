@@ -357,6 +357,9 @@
             </div>
 
             <div class="header-actions">
+                <button class="btn btn-danger" onclick="resetSystem()">
+                    <i class="fa-solid fa-rotate-left"></i> איפוס מערכת
+                </button>
                 <button class="btn btn-secondary" onclick="openRecycleBinModal()">
                     <i class="fa-solid fa-trash-arrow-up"></i> סל מחזור (<span id="recycleBinCount">0</span>)
                 </button>
@@ -408,7 +411,7 @@
                         <th>תאריך ושעה</th>
                         <th>שם הלקוח</th>
                         <th>מספר טלפון</th>
-                        <th>כתובת מלאה ומייל</th>
+                        <th>עיר, כתובת ומייל</th>
                         <th>פירוט סחורה</th>
                         <th>אופן קבלה</th>
                         <th>הערות</th>
@@ -441,7 +444,8 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div class="form-group">
                         <label>שם הלקוח *</label>
-                        <input type="text" id="fName" class="form-control" required>
+                        <input type="text" id="fName" class="form-control" list="customersDataList" onchange="fillCustomerFromHistory()" required>
+                        <datalist id="customersDataList"></datalist>
                     </div>
                     <div class="form-group">
                         <label>מספר טלפון *</label>
@@ -521,6 +525,11 @@
             <h2 style="color: var(--danger); margin-bottom: 25px; font-family: 'Tinos', serif;">
                 <i class="fa-solid fa-trash-can"></i> סל מחזור - הזמנות שנמחקו
             </h2>
+            <div style="display:flex; justify-content:flex-start; margin-bottom: 15px;">
+                <button id="restoreAllBtn" class="btn btn-primary" onclick="restoreAllRecycleBin()">
+                    <i class="fa-solid fa-trash-arrow-up"></i> שחזר את כל סל המחזור
+                </button>
+            </div>
             <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                 <table>
                     <thead>
@@ -541,7 +550,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBG8ZiYOdVdI45AsKnMcbX6QaVlkU4dXhM",
@@ -564,6 +573,7 @@
             snapshot.forEach((snapshotDoc) => {
                 window.allOrders.push({ _docId: snapshotDoc.id, ...snapshotDoc.data() });
             });
+            refreshCustomersDataList();
             applyFilters();
         }, (error) => {
             console.error("שגיאה במשיכת נתונים: ", error);
@@ -572,6 +582,16 @@
         window.fbAddOrder = async (data) => await addDoc(collection(db, "orders"), data);
         window.fbUpdateOrder = async (id, data) => await updateDoc(doc(db, "orders", id), data);
         window.fbDeleteOrder = async (id) => await deleteDoc(doc(db, "orders", id));
+        window.fbDeleteOrders = async (ids) => {
+            const batch = writeBatch(db);
+            ids.forEach((id) => batch.delete(doc(db, "orders", id)));
+            await batch.commit();
+        };
+        window.fbAddOrders = async (orders) => {
+            const batch = writeBatch(db);
+            orders.forEach((order) => batch.set(doc(collection(db, "orders")), order));
+            await batch.commit();
+        };
     </script>
 
     <script>
@@ -668,6 +688,51 @@
             document.getElementById('fTotalLabel').innerText = `₪${total}`;
         }
 
+        function getNumericOrderNumber(orderId) {
+            const match = String(orderId || '').match(/^(?:MANUAL-)?(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+        }
+
+        function getNextOrderId() {
+            const maxOrderNumber = (window.allOrders || []).reduce((max, order) => {
+                return Math.max(max, getNumericOrderNumber(order.orderId));
+            }, 0);
+
+            return String(maxOrderNumber + 1).padStart(6, '0');
+        }
+
+        function refreshCustomersDataList() {
+            const dataList = document.getElementById('customersDataList');
+            if (!dataList) return;
+
+            const customersByName = new Map();
+            (window.allOrders || []).forEach((order) => {
+                const customer = order.customer || {};
+                if (customer.name && !customersByName.has(customer.name)) {
+                    customersByName.set(customer.name, customer);
+                }
+            });
+
+            dataList.innerHTML = Array.from(customersByName.keys()).sort((a, b) => a.localeCompare(b, 'he')).map((name) => {
+                const customer = customersByName.get(name);
+                return `<option value="${name}" label="${customer.phone || ''} ${customer.city || ''}"></option>`;
+            }).join('');
+        }
+
+        function fillCustomerFromHistory() {
+            const selectedName = document.getElementById('fName').value.trim();
+            const existingOrder = (window.allOrders || []).find((order) => order.customer?.name === selectedName);
+            if (!existingOrder) return;
+
+            const customer = existingOrder.customer || {};
+            document.getElementById('fPhone').value = customer.phone || '';
+            document.getElementById('fEmail').value = customer.email || '';
+            document.getElementById('fCity').value = customer.city || '';
+            document.getElementById('fStreet').value = customer.street || '';
+            document.getElementById('fHouseNum').value = customer.houseNum || '';
+            document.getElementById('fApartmentNum').value = customer.apartmentNum || '';
+        }
+
         function convertToIsraelTime(isoString) {
             if(!isoString) return '-';
             try {
@@ -698,7 +763,7 @@
                     o.customer?.name?.toLowerCase().includes(search) || 
                     o.customer?.phone?.includes(search) || 
                     o.customer?.email?.toLowerCase().includes(search) ||
-                    o.orderId?.toLowerCase().includes(search);
+                    String(o.orderId || '').toLowerCase().includes(search);
                 const cityMatch = city === '' || o.customer?.city?.toLowerCase().includes(city);
                 const priceMatch = (o.totalPrice || 0) >= minPrice;
                 const shippingMatch = shipping === 'all' || o.shippingMethod === shipping;
@@ -801,11 +866,10 @@
                     
                     if (window.fbUpdateOrder) {
                         await window.fbUpdateOrder(docId, updatedData);
-                        closeFormModal(); // סגירה מיידית וחזרה למסך הראשי
-                        alert(`ההזמנה ${existingOrderId} עודכנה בהצלחה!`);
+                        closeFormModal(); // סגירה רק אחרי שהשמירה הסתיימה בפיירבייס
                     }
                 } else {
-                    const newOrderId = 'MANUAL-' + Math.floor(100000 + Math.random() * 900000);
+                    const newOrderId = getNextOrderId();
                     const newOrder = {
                         orderId: newOrderId,
                         customer: { name, phone, email, city, street, houseNum, apartmentNum, notes },
@@ -817,8 +881,7 @@
 
                     if (window.fbAddOrder) {
                         await window.fbAddOrder(newOrder);
-                        closeFormModal(); // סגירה מיידית וחזרה למסך הראשי
-                        alert(`הזמנה חדשה ${newOrderId} נוצרה בהצלחה!`);
+                        closeFormModal(); // סגירה רק אחרי שהשמירה הסתיימה בפיירבייס
                     }
                 }
             } catch (error) {
@@ -843,16 +906,15 @@
                 deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מוחק...`;
 
                 const fullOrderData = window.allOrders.find(o => o._docId === docId);
-                if (fullOrderData) {
-                    recycleBin.push(fullOrderData);
-                    updateRecycleBinUI();
-                }
 
                 try {
                     if (window.fbDeleteOrder) {
                         await window.fbDeleteOrder(docId);
-                        closeFormModal(); // סגירה מיידית וחזרה למסך הראשי
-                        alert(`ההזמנה ${orderId} הועברה לסל המחזור.`);
+                        if (fullOrderData && !recycleBin.some((order) => order._docId === fullOrderData._docId)) {
+                            recycleBin.push(fullOrderData);
+                            updateRecycleBinUI();
+                        }
+                        closeFormModal(); // סגירה רק אחרי שהמחיקה הסתיימה בפיירבייס
                     }
                 } catch (error) {
                     console.error("שגיאה במחיקת ההזמנה: ", error);
@@ -865,6 +927,12 @@
 
         function updateRecycleBinUI() {
             document.getElementById('recycleBinCount').innerText = recycleBin.length;
+            const restoreAllBtn = document.getElementById('restoreAllBtn');
+            if (restoreAllBtn) {
+                restoreAllBtn.disabled = recycleBin.length === 0;
+                restoreAllBtn.innerHTML = `<i class="fa-solid fa-trash-arrow-up"></i> שחזר את כל סל המחזור`;
+            }
+
             const tbody = document.getElementById('recycleBinTableBody');
             tbody.innerHTML = '';
             
@@ -906,8 +974,7 @@
                     await window.fbAddOrder(cleanData);
                     recycleBin.splice(index, 1);
                     updateRecycleBinUI();
-                    closeRecycleBinModal(); // סגירה מיידית וחזרה למסך הראשי
-                    alert(`הזמנה ${cleanData.orderId} שוחזרה בהצלחה לפיירבייס!`);
+                    closeRecycleBinModal(); // סגירה רק אחרי שהשחזור הסתיים בפיירבייס
                 }
             } catch (error) {
                 console.error("שגיאה בשחזור רשומה: ", error);
@@ -916,6 +983,62 @@
                     restoreBtn.disabled = false;
                     restoreBtn.innerHTML = `<i class="fa-solid fa-trash-arrow-up"></i> שחזר`;
                 }
+            }
+        }
+
+        async function restoreAllRecycleBin() {
+            if (recycleBin.length === 0) return;
+
+            const restoreAllBtn = document.getElementById('restoreAllBtn');
+            restoreAllBtn.disabled = true;
+            restoreAllBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> משחזר הכל...`;
+
+            const ordersToRestore = recycleBin.map(({ _docId, ...cleanData }) => cleanData);
+
+            try {
+                if (window.fbAddOrders) {
+                    await window.fbAddOrders(ordersToRestore);
+                    recycleBin = [];
+                    updateRecycleBinUI();
+                    closeRecycleBinModal();
+                }
+            } catch (error) {
+                console.error("שגיאה בשחזור כל סל המחזור: ", error);
+                alert("לא ניתן היה לשחזר את כל סל המחזור לענן. אנא נסה שוב.");
+                restoreAllBtn.disabled = false;
+                restoreAllBtn.innerHTML = `<i class="fa-solid fa-trash-arrow-up"></i> שחזר את כל סל המחזור`;
+            }
+        }
+
+        async function resetSystem() {
+            if (!window.allOrders || window.allOrders.length === 0) {
+                alert("אין נתונים לאיפוס.");
+                return;
+            }
+
+            const confirmReset = confirm("האם אתה בטוח שברצונך למחוק את כל המידע? אם תאשר, כל הנתונים יעברו לסל המחזור.");
+            if (!confirmReset) return;
+
+            const resetBtn = document.querySelector('button[onclick="resetSystem()"]');
+            resetBtn.disabled = true;
+            resetBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מאפס...`;
+
+            const ordersToRecycle = [...window.allOrders];
+            const idsToDelete = ordersToRecycle.map((order) => order._docId).filter(Boolean);
+
+            try {
+                if (window.fbDeleteOrders) {
+                    await window.fbDeleteOrders(idsToDelete);
+                    const existingRecycleIds = new Set(recycleBin.map((order) => order._docId));
+                    recycleBin = [...recycleBin, ...ordersToRecycle.filter((order) => !existingRecycleIds.has(order._docId))];
+                    updateRecycleBinUI();
+                }
+            } catch (error) {
+                console.error("שגיאה באיפוס המערכת: ", error);
+                alert("איפוס המערכת נכשל. נסה שוב.");
+            } finally {
+                resetBtn.disabled = false;
+                resetBtn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> איפוס מערכת`;
             }
         }
 
