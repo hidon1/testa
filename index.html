@@ -1002,24 +1002,64 @@
             printWindow.onload = () => printWindow.print();
         }
 
-        async function createOrGetReceiptForOrder(order) {
-            const cachedReceipt = getReceiptByOrderDocId(order._docId);
-            if (cachedReceipt) return cachedReceipt;
+        function getNextLocalReceiptNumber() {
+            return (window.allReceipts || []).reduce((max, receipt) => {
+                const numberValue = Number(receipt.receiptNumber || 0);
+                return Number.isFinite(numberValue) ? Math.max(max, numberValue) : max;
+            }, 0) + 1;
+        }
 
-            if (window.fbGetReceiptByOrder) {
-                const firebaseReceipt = await window.fbGetReceiptByOrder(order._docId);
-                if (firebaseReceipt) return firebaseReceipt;
-            }
+        function buildLocalReceipt(order) {
+            const nextReceiptNumber = getNextLocalReceiptNumber();
+            return {
+                _localOnly: true,
+                receiptNumber: nextReceiptNumber,
+                receiptId: String(nextReceiptNumber).padStart(6, '0'),
+                orderDocId: order._docId,
+                orderId: order.orderId || '',
+                date: new Date().toISOString(),
+                customer: order.customer || {},
+                manualItemsDescription: order.manualItemsDescription || '',
+                items: Array.isArray(order.items) ? order.items : [],
+                shippingMethod: order.shippingMethod || 'איסוף עצמי',
+                totalPrice: order.totalPrice || 0
+            };
+        }
 
+        async function saveReceiptToFirebaseAfterPrint(order) {
             if (!window.fbCreateReceipt) throw new Error('Firebase receipt API is unavailable');
             const createdReceipt = await window.fbCreateReceipt(order);
 
             if (window.fbGetReceiptByOrder) {
                 const firebaseReceipt = await window.fbGetReceiptByOrder(order._docId);
-                if (firebaseReceipt) return firebaseReceipt;
+                return firebaseReceipt || createdReceipt;
             }
 
             return createdReceipt;
+        }
+
+        async function createOrGetReceiptForOrder(order) {
+            const cachedReceipt = getReceiptByOrderDocId(order._docId);
+            if (cachedReceipt) return { receipt: cachedReceipt, shouldSaveAfterPrint: false };
+
+            if (window.fbGetReceiptByOrder) {
+                const firebaseReceipt = await window.fbGetReceiptByOrder(order._docId);
+                if (firebaseReceipt) return { receipt: firebaseReceipt, shouldSaveAfterPrint: false };
+            }
+
+            return { receipt: buildLocalReceipt(order), shouldSaveAfterPrint: true, order };
+        }
+
+        async function saveReceiptsAfterPrint(receiptJobs) {
+            const jobsToSave = receiptJobs.filter((job) => job.shouldSaveAfterPrint);
+            if (jobsToSave.length === 0) return;
+
+            const results = await Promise.allSettled(jobsToSave.map((job) => saveReceiptToFirebaseAfterPrint(job.order)));
+            const rejected = results.find((result) => result.status === 'rejected');
+            if (rejected) {
+                logReceiptError('הקבלה הופקה, אך שמירתה בפיירבייס נכשלה', rejected.reason);
+                alert(`הקבלה הופקה ונפתחה להדפסה, אך השמירה בפיירבייס נכשלה. ${getReceiptErrorMessage(rejected.reason)}`);
+            }
         }
 
         function getFirebaseErrorDetails(error) {
@@ -1063,8 +1103,9 @@
             }
 
             try {
-                const receipt = await createOrGetReceiptForOrder(order);
-                openReceiptPrintWindow([receipt]);
+                const receiptJob = await createOrGetReceiptForOrder(order);
+                openReceiptPrintWindow([receiptJob.receipt]);
+                await saveReceiptsAfterPrint([receiptJob]);
             } catch (error) {
                 logReceiptError('שגיאה בהפקת קבלה', error);
                 alert(getReceiptErrorMessage(error));
@@ -1078,11 +1119,21 @@
             }
 
             try {
-                const receipts = [];
+                const receiptJobs = [];
                 for (const order of currentFilteredOrders) {
-                    receipts.push(await createOrGetReceiptForOrder(order));
+                    receiptJobs.push(await createOrGetReceiptForOrder(order));
                 }
-                openReceiptPrintWindow(receipts);
+
+                let nextLocalReceiptNumber = getNextLocalReceiptNumber();
+                receiptJobs.forEach((job) => {
+                    if (!job.receipt?._localOnly) return;
+                    job.receipt.receiptNumber = nextLocalReceiptNumber;
+                    job.receipt.receiptId = String(nextLocalReceiptNumber).padStart(6, '0');
+                    nextLocalReceiptNumber += 1;
+                });
+
+                openReceiptPrintWindow(receiptJobs.map((job) => job.receipt));
+                await saveReceiptsAfterPrint(receiptJobs);
             } catch (error) {
                 logReceiptError('שגיאה בהפקת כל הקבלות', error);
                 alert(getReceiptErrorMessage(error));
