@@ -342,6 +342,61 @@
         body.edit-mode-active .edit-notice-banner {
             display: block;
         }
+
+        .btn-receipt {
+            background-color: #0f766e;
+            color: white;
+            padding: 7px 10px;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+
+        .btn-receipt:hover:not(:disabled) {
+            background-color: #115e59;
+        }
+
+        .receipt-print-page {
+            direction: rtl;
+            font-family: 'Assistant', Arial, sans-serif;
+            color: #1f2937;
+            padding: 24px;
+        }
+
+        .receipt-card {
+            border: 2px solid var(--primary-dark);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 24px;
+            page-break-inside: avoid;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfaf7 100%);
+        }
+
+        .receipt-card h2 {
+            font-family: 'Tinos', serif;
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+        }
+
+        .receipt-meta, .receipt-customer, .receipt-total {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            gap: 10px;
+            margin: 14px 0;
+        }
+
+        .receipt-items {
+            border-top: 1px solid #d1d5db;
+            border-bottom: 1px solid #d1d5db;
+            padding: 12px 0;
+            margin: 12px 0;
+            white-space: pre-wrap;
+        }
+
+        .receipt-total {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary-light);
+        }
     </style>
 </head>
 
@@ -365,6 +420,9 @@
                 </button>
                 <button class="btn btn-success" onclick="exportToExcel()">
                     <i class="fa-solid fa-file-excel"></i> ייצוא לאקסל
+                </button>
+                <button class="btn btn-primary" onclick="printAllFilteredReceipts()">
+                    <i class="fa-solid fa-receipt"></i> הדפס כל הקבלות
                 </button>
                 <button id="editModeToggleBtn" class="btn btn-edit-mode" onclick="toggleEditMode()">
                     <i class="fa-solid fa-pen-to-square"></i> מצב עריכה: <span id="editModeStatusText">כבוי</span>
@@ -416,11 +474,12 @@
                         <th>אופן קבלה</th>
                         <th>הערות</th>
                         <th>סכום סופי</th>
+                        <th>קבלה</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
                     <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px; color: #64748b;">
+                        <td colspan="10" style="text-align: center; padding: 40px; color: #64748b;">
                             <i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים מאובטחים מ-Firebase...
                         </td>
                     </tr>
@@ -550,7 +609,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, writeBatch, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBG8ZiYOdVdI45AsKnMcbX6QaVlkU4dXhM",
@@ -566,8 +625,21 @@
         const db = getFirestore(app);
 
         window.allOrders = [];
+        window.allReceipts = [];
 
         const q = query(collection(db, "orders"), orderBy("date", "desc"));
+        const receiptsQuery = query(collection(db, "receipts"), orderBy("receiptNumber", "asc"));
+
+        onSnapshot(receiptsQuery, (snapshot) => {
+            window.allReceipts = [];
+            snapshot.forEach((snapshotDoc) => {
+                window.allReceipts.push({ _docId: snapshotDoc.id, ...snapshotDoc.data() });
+            });
+            applyFilters();
+        }, (error) => {
+            console.error("שגיאה במשיכת קבלות: ", error);
+        });
+
         onSnapshot(q, (snapshot) => {
             window.allOrders = [];
             snapshot.forEach((snapshotDoc) => {
@@ -592,6 +664,41 @@
             orders.forEach((order) => batch.set(doc(collection(db, "orders")), order));
             await batch.commit();
         };
+        window.fbCreateReceipt = async (order) => await runTransaction(db, async (transaction) => {
+            const existingReceiptRef = doc(db, "receiptsByOrder", order._docId);
+            const existingReceiptDoc = await transaction.get(existingReceiptRef);
+            if (existingReceiptDoc.exists()) {
+                const existingReceiptId = existingReceiptDoc.data().receiptDocId;
+                const existingFullReceipt = await transaction.get(doc(db, "receipts", existingReceiptId));
+                if (existingFullReceipt.exists()) {
+                    return { _docId: existingFullReceipt.id, ...existingFullReceipt.data() };
+                }
+            }
+
+            const counterRef = doc(db, "metadata", "receiptCounter");
+            const counterDoc = await transaction.get(counterRef);
+            const nextReceiptNumber = (counterDoc.exists() ? counterDoc.data().lastNumber || 0 : 0) + 1;
+            const receiptRef = doc(collection(db, "receipts"));
+            const nowIso = new Date().toISOString();
+            const receiptData = {
+                receiptNumber: nextReceiptNumber,
+                receiptId: String(nextReceiptNumber).padStart(6, '0'),
+                orderDocId: order._docId,
+                orderId: order.orderId || '',
+                date: nowIso,
+                customer: order.customer || {},
+                manualItemsDescription: order.manualItemsDescription || '',
+                items: Array.isArray(order.items) ? order.items : [],
+                shippingMethod: order.shippingMethod || 'איסוף עצמי',
+                totalPrice: order.totalPrice || 0,
+                createdAt: serverTimestamp()
+            };
+
+            transaction.set(receiptRef, receiptData);
+            transaction.set(existingReceiptRef, { receiptDocId: receiptRef.id, receiptNumber: nextReceiptNumber, orderId: order.orderId || '' });
+            transaction.set(counterRef, { lastNumber: nextReceiptNumber }, { merge: true });
+            return { _docId: receiptRef.id, ...receiptData };
+        });
     </script>
 
     <script>
@@ -747,7 +854,7 @@
         function applyFilters() {
             const tbody = document.getElementById('ordersTableBody');
             if (!window.allOrders || window.allOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #64748b;">אין רשומות קיימות.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #64748b;">אין רשומות קיימות.</td></tr>`;
                 updateDashboardKPIs(0, 0);
                 currentFilteredOrders = [];
                 return;
@@ -776,7 +883,7 @@
 
             tbody.innerHTML = '';
             if(currentFilteredOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #64748b;">לא נמצאו רשומות תואמות.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #64748b;">לא נמצאו רשומות תואמות.</td></tr>`;
                 return;
             }
 
@@ -814,9 +921,119 @@
                     <td><span class="${shippingClass}">${o.shippingMethod || 'איסוף עצמי'}</span></td>
                     <td style="font-size:0.85rem; color:#64748b; max-width:150px; overflow:hidden; text-overflow:ellipsis;">${o.customer?.notes || '-'}</td>
                     <td style="font-weight:800; color:var(--primary-light); font-size:1.1rem;">₪${o.totalPrice || 0}</td>
+                    <td>
+                        <button class="btn btn-receipt" onclick="event.stopPropagation(); printReceiptForOrder('${o._docId}')">
+                            <i class="fa-solid fa-print"></i> ${getReceiptLabel(o._docId)}
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+
+        function getReceiptByOrderDocId(orderDocId) {
+            return (window.allReceipts || []).find((receipt) => receipt.orderDocId === orderDocId);
+        }
+
+        function getReceiptLabel(orderDocId) {
+            const receipt = getReceiptByOrderDocId(orderDocId);
+            return receipt ? `הדפס קבלה #${receipt.receiptId}` : 'הפק והדפס';
+        }
+
+        function formatReceiptItems(record) {
+            if (Array.isArray(record.items) && record.items.length > 0) {
+                return record.items.map((item) => `• ${item.name || 'פריט'} - כמות: ${item.qty || 1}`).join('\n');
+            }
+            return record.manualItemsDescription || 'הזמנה כללית';
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+            }[char]));
+        }
+
+        function buildReceiptHtml(receipts) {
+            const cards = receipts.map((receipt) => {
+                const customer = receipt.customer || {};
+                return `
+                    <section class="receipt-card">
+                        <h2>קבלה מספר ${escapeHtml(receipt.receiptId)}</h2>
+                        <div class="receipt-meta">
+                            <div><strong>מזהה הזמנה:</strong> ${escapeHtml(receipt.orderId || '-')}</div>
+                            <div><strong>תאריך ושעה:</strong> ${escapeHtml(convertToIsraelTime(receipt.date))}</div>
+                        </div>
+                        <div class="receipt-customer">
+                            <div><strong>שם הלקוח:</strong> ${escapeHtml(customer.name || '-')}</div>
+                            <div><strong>מספר טלפון:</strong> ${escapeHtml(customer.phone || '-')}</div>
+                        </div>
+                        <div class="receipt-items"><strong>פירוט סחורה:</strong><br>${escapeHtml(formatReceiptItems(receipt))}</div>
+                        <div><strong>אופן קבלה:</strong> ${escapeHtml(receipt.shippingMethod || 'איסוף עצמי')}</div>
+                        <div class="receipt-total">
+                            <div>סכום סופי לתשלום</div>
+                            <div>₪${Number(receipt.totalPrice || 0).toLocaleString()}</div>
+                        </div>
+                    </section>`;
+            }).join('');
+
+            return `<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"><title>הדפסת קבלות</title>
+                <style>${document.querySelector('style').innerHTML} @media print { body { background: white; padding: 0; } .receipt-card { break-inside: avoid; } }</style>
+                </head><body><main class="receipt-print-page">${cards}</main></body></html>`;
+        }
+
+        function openReceiptPrintWindow(receipts) {
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) {
+                alert('הדפדפן חסם חלון הדפסה. אפשר חלונות קופצים ונסה שוב.');
+                return;
+            }
+            printWindow.document.open();
+            printWindow.document.write(buildReceiptHtml(receipts));
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.onload = () => printWindow.print();
+        }
+
+        async function createOrGetReceiptForOrder(order) {
+            const existingReceipt = getReceiptByOrderDocId(order._docId);
+            if (existingReceipt) return existingReceipt;
+            if (!window.fbCreateReceipt) throw new Error('Firebase receipt API is unavailable');
+            return await window.fbCreateReceipt(order);
+        }
+
+        async function printReceiptForOrder(orderDocId) {
+            const order = (window.allOrders || []).find((item) => item._docId === orderDocId);
+            if (!order) {
+                alert('לא נמצאה הזמנה להפקת קבלה.');
+                return;
+            }
+
+            try {
+                const receipt = await createOrGetReceiptForOrder(order);
+                openReceiptPrintWindow([receipt]);
+            } catch (error) {
+                console.error('שגיאה בהפקת קבלה: ', error);
+                alert('לא ניתן היה להפיק קבלה בפיירבייס. נסה שוב.');
+            }
+        }
+
+        async function printAllFilteredReceipts() {
+            if (currentFilteredOrders.length === 0) {
+                alert('אין קבלות להדפסה תחת הסינון הנוכחי.');
+                return;
+            }
+
+            try {
+                const receipts = [];
+                for (const order of currentFilteredOrders) {
+                    receipts.push(await createOrGetReceiptForOrder(order));
+                }
+                openReceiptPrintWindow(receipts);
+            } catch (error) {
+                console.error('שגיאה בהפקת כל הקבלות: ', error);
+                alert('לא ניתן היה להפיק את כל הקבלות בפיירבייס. נסה שוב.');
+            }
         }
 
         function updateDashboardKPIs(count, revenue) {
