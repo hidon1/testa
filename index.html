@@ -1022,6 +1022,39 @@
             return createdReceipt;
         }
 
+        function getFirebaseErrorDetails(error) {
+            return {
+                code: error?.code || 'unknown',
+                message: error?.message || String(error),
+                stack: error?.stack || ''
+            };
+        }
+
+        function getReceiptErrorMessage(error) {
+            const code = error?.code || '';
+            const message = error?.message || '';
+            const normalizedMessage = message.toLowerCase();
+
+            if (code === 'permission-denied' || normalizedMessage.includes('insufficient permissions')) {
+                return 'אין הרשאה להפיק קבלה בפיירבייס. יש לבדוק הרשאות Firestore ל-receipts, receiptsByOrder ול-metadata/receiptCounter.';
+            }
+
+            if (code === 'unavailable' || code === 'deadline-exceeded') {
+                return 'בעיה זמנית בחיבור לפיירבייס. בדוק חיבור לאינטרנט ונסה שוב.';
+            }
+
+            if (code === 'not-found') {
+                return 'חסר מסמך או נתיב בפיירבייס שנדרש להפקת הקבלה.';
+            }
+
+            return `לא ניתן היה להפיק קבלה בפיירבייס. שגיאה: ${message || code || 'לא ידועה'}`;
+        }
+
+        function logReceiptError(context, error) {
+            const details = getFirebaseErrorDetails(error);
+            console.error(context, details, error);
+        }
+
         async function printReceiptForOrder(orderDocId) {
             const order = (window.allOrders || []).find((item) => item._docId === orderDocId);
             if (!order) {
@@ -1033,8 +1066,8 @@
                 const receipt = await createOrGetReceiptForOrder(order);
                 openReceiptPrintWindow([receipt]);
             } catch (error) {
-                console.error('שגיאה בהפקת קבלה: ', error);
-                alert('לא ניתן היה להפיק קבלה בפיירבייס. נסה שוב.');
+                logReceiptError('שגיאה בהפקת קבלה', error);
+                alert(getReceiptErrorMessage(error));
             }
         }
 
@@ -1051,8 +1084,8 @@
                 }
                 openReceiptPrintWindow(receipts);
             } catch (error) {
-                console.error('שגיאה בהפקת כל הקבלות: ', error);
-                alert('לא ניתן היה להפיק את כל הקבלות בפיירבייס. נסה שוב.');
+                logReceiptError('שגיאה בהפקת כל הקבלות', error);
+                alert(getReceiptErrorMessage(error));
             }
         }
 
