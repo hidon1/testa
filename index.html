@@ -609,7 +609,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, writeBatch, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, onSnapshot, query, orderBy, writeBatch, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBG8ZiYOdVdI45AsKnMcbX6QaVlkU4dXhM",
@@ -664,15 +664,22 @@
             orders.forEach((order) => batch.set(doc(collection(db, "orders")), order));
             await batch.commit();
         };
+        window.fbGetReceiptByOrder = async (orderDocId) => {
+            const receiptLinkDoc = await getDoc(doc(db, "receiptsByOrder", orderDocId));
+            if (!receiptLinkDoc.exists()) return null;
+
+            const receiptDocId = receiptLinkDoc.data().receiptDocId;
+            if (!receiptDocId) return null;
+
+            const receiptDoc = await getDoc(doc(db, "receipts", receiptDocId));
+            return receiptDoc.exists() ? { _docId: receiptDoc.id, ...receiptDoc.data() } : null;
+        };
+
         window.fbCreateReceipt = async (order) => await runTransaction(db, async (transaction) => {
             const existingReceiptRef = doc(db, "receiptsByOrder", order._docId);
             const existingReceiptDoc = await transaction.get(existingReceiptRef);
             if (existingReceiptDoc.exists()) {
-                const existingReceiptId = existingReceiptDoc.data().receiptDocId;
-                const existingFullReceipt = await transaction.get(doc(db, "receipts", existingReceiptId));
-                if (existingFullReceipt.exists()) {
-                    return { _docId: existingFullReceipt.id, ...existingFullReceipt.data() };
-                }
+                return { _needsFetch: true, orderDocId: order._docId };
             }
 
             const counterRef = doc(db, "metadata", "receiptCounter");
@@ -996,10 +1003,23 @@
         }
 
         async function createOrGetReceiptForOrder(order) {
-            const existingReceipt = getReceiptByOrderDocId(order._docId);
-            if (existingReceipt) return existingReceipt;
+            const cachedReceipt = getReceiptByOrderDocId(order._docId);
+            if (cachedReceipt) return cachedReceipt;
+
+            if (window.fbGetReceiptByOrder) {
+                const firebaseReceipt = await window.fbGetReceiptByOrder(order._docId);
+                if (firebaseReceipt) return firebaseReceipt;
+            }
+
             if (!window.fbCreateReceipt) throw new Error('Firebase receipt API is unavailable');
-            return await window.fbCreateReceipt(order);
+            const createdReceipt = await window.fbCreateReceipt(order);
+
+            if (window.fbGetReceiptByOrder) {
+                const firebaseReceipt = await window.fbGetReceiptByOrder(order._docId);
+                if (firebaseReceipt) return firebaseReceipt;
+            }
+
+            return createdReceipt;
         }
 
         async function printReceiptForOrder(orderDocId) {
