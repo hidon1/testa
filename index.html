@@ -163,15 +163,65 @@
         }
 
         .filter-card {
-            background: white;
-            padding: 22px;
-            border-radius: 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #fbfaf7 100%);
+            padding: 24px;
+            border-radius: 18px;
             box-shadow: var(--shadow-elegant);
             margin-bottom: 25px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
+            gap: 16px;
             align-items: end;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-card::before {
+            content: '';
+            position: absolute;
+            inset-inline-start: 0;
+            top: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--gold), var(--primary-light));
+        }
+
+        .filter-card-header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-bottom: 4px;
+        }
+
+        .filter-card-title {
+            color: var(--primary-dark);
+            font-family: 'Tinos', serif;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-card-subtitle {
+            color: #64748b;
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .date-range-group {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .form-group {
@@ -184,22 +234,50 @@
             font-weight: 700;
             font-size: 0.9rem;
             color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 7px;
         }
 
         .form-control {
             padding: 11px 14px;
             border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 0.95rem;
             outline: none;
             transition: var(--transition-smooth);
             background-color: #f8fafc;
+            min-height: 44px;
         }
 
         .form-control:focus {
             border-color: var(--primary-light);
             background-color: #fff;
             box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.15);
+        }
+
+        .form-control[type="date"] {
+            color: #334155;
+            direction: rtl;
+        }
+
+        .form-control[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 18px 12px;
+            }
+
+            .filter-card {
+                grid-template-columns: 1fr;
+            }
+
+            .date-range-group {
+                grid-template-columns: 1fr;
+            }
         }
 
         .table-responsive {
@@ -438,21 +516,39 @@
             נתונים או למחוק את ההזמנה.
         </div>
 
-        <section class="filter-card">
-            <div class="form-group">
-                <label>חיפוש מהיר (שם / טלפון / מייל / מזהה)</label>
-                <input type="text" id="searchFilter" class="form-control" placeholder="הקלד פרטי לקוח..." oninput="applyFilters()">
+        <section class="filter-card" aria-label="סינון הזמנות">
+            <div class="filter-card-header">
+                <div>
+                    <h2 class="filter-card-title"><i class="fa-solid fa-filter"></i> סינון וחיפוש הזמנות</h2>
+                    <p class="filter-card-subtitle">אפשר לחפש לפי פרטי לקוח, טווח תאריכים, עיר, סכום ואופן קבלה.</p>
+                </div>
+                <div class="filter-actions">
+                    <button type="button" class="btn btn-secondary" onclick="clearFilters()">
+                        <i class="fa-solid fa-eraser"></i> ניקוי סינון
+                    </button>
+                </div>
             </div>
             <div class="form-group">
-                <label>עיר מגורים</label>
+                <label for="searchFilter"><i class="fa-solid fa-magnifying-glass"></i> חיפוש מהיר</label>
+                <input type="text" id="searchFilter" class="form-control" placeholder="שם / טלפון / מייל / מזהה" oninput="applyFilters()">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-calendar-days"></i> טווח תאריכים</label>
+                <div class="date-range-group">
+                    <input type="date" id="dateFromFilter" class="form-control" aria-label="מתאריך" onchange="applyFilters()">
+                    <input type="date" id="dateToFilter" class="form-control" aria-label="עד תאריך" onchange="applyFilters()">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="cityFilter"><i class="fa-solid fa-location-dot"></i> עיר מגורים</label>
                 <input type="text" id="cityFilter" class="form-control" placeholder="כל הערים" oninput="applyFilters()">
             </div>
             <div class="form-group">
-                <label>סכום הזמנה מינימלי</label>
+                <label for="minPriceFilter"><i class="fa-solid fa-shekel-sign"></i> סכום מינימלי</label>
                 <input type="number" id="minPriceFilter" class="form-control" placeholder="₪0" oninput="applyFilters()">
             </div>
             <div class="form-group">
-                <label>אופן קבלה</label>
+                <label for="shippingFilter"><i class="fa-solid fa-truck-fast"></i> אופן קבלה</label>
                 <select id="shippingFilter" class="form-control" onchange="applyFilters()">
                     <option value="all">כל האפשרויות</option>
                     <option value="איסוף עצמי">איסוף עצמי</option>
@@ -858,6 +954,30 @@
             } catch (e) { return isoString; }
         }
 
+        function getOrderDateValue(orderDate) {
+            const parsedDate = new Date(orderDate);
+            const timestamp = parsedDate.getTime();
+            return Number.isNaN(timestamp) ? null : timestamp;
+        }
+
+        function getDateRangeBounds() {
+            const fromValue = document.getElementById('dateFromFilter').value;
+            const toValue = document.getElementById('dateToFilter').value;
+
+            return {
+                from: fromValue ? new Date(`${fromValue}T00:00:00`).getTime() : null,
+                to: toValue ? new Date(`${toValue}T23:59:59.999`).getTime() : null
+            };
+        }
+
+        function clearFilters() {
+            ['searchFilter', 'dateFromFilter', 'dateToFilter', 'cityFilter', 'minPriceFilter'].forEach((id) => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('shippingFilter').value = 'all';
+            applyFilters();
+        }
+
         function applyFilters() {
             const tbody = document.getElementById('ordersTableBody');
             if (!window.allOrders || window.allOrders.length === 0) {
@@ -871,6 +991,7 @@
             const city = document.getElementById('cityFilter').value.toLowerCase();
             const minPrice = parseFloat(document.getElementById('minPriceFilter').value) || 0;
             const shipping = document.getElementById('shippingFilter').value;
+            const dateRange = getDateRangeBounds();
 
             currentFilteredOrders = window.allOrders.filter(o => {
                 const searchMatch = search === '' || 
@@ -881,8 +1002,11 @@
                 const cityMatch = city === '' || o.customer?.city?.toLowerCase().includes(city);
                 const priceMatch = (o.totalPrice || 0) >= minPrice;
                 const shippingMatch = shipping === 'all' || o.shippingMethod === shipping;
+                const orderDateValue = getOrderDateValue(o.date);
+                const dateFromMatch = dateRange.from === null || (orderDateValue !== null && orderDateValue >= dateRange.from);
+                const dateToMatch = dateRange.to === null || (orderDateValue !== null && orderDateValue <= dateRange.to);
 
-                return searchMatch && cityMatch && priceMatch && shippingMatch;
+                return searchMatch && cityMatch && priceMatch && shippingMatch && dateFromMatch && dateToMatch;
             });
 
             let totalRevenue = currentFilteredOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
