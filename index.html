@@ -475,10 +475,88 @@
             font-weight: 800;
             color: var(--primary-light);
         }
+
+        .auth-gate {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background: linear-gradient(135deg, var(--primary-dark), #0f241b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-gate.hidden {
+            display: none;
+        }
+
+        .auth-card {
+            width: min(460px, 100%);
+            background: white;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            border-top: 5px solid var(--gold);
+        }
+
+        .auth-card h2 {
+            color: var(--primary-dark);
+            font-family: 'Tinos', serif;
+            margin-bottom: 10px;
+        }
+
+        .auth-message {
+            margin-top: 14px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .payment-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            margin-top: 6px;
+            white-space: nowrap;
+        }
+
+        .payment-status.match {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .payment-status.gap {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .payment-status.unknown {
+            background: #f1f5f9;
+            color: #475569;
+        }
     </style>
 </head>
 
 <body>
+
+    <div id="authGate" class="auth-gate">
+        <div class="auth-card">
+            <h2><i class="fa-solid fa-lock"></i> כניסה מאובטחת</h2>
+            <p>הגישה למרכז הבקרה מוגבלת למייל המורשה בלבד. לחץ כדי לקבל קישור/קוד כניסה למייל.</p>
+            <div class="form-group" style="margin-top: 18px;">
+                <label>מייל מורשה</label>
+                <input type="email" id="authEmail" class="form-control" value="zm0548407450@gmail.com" readonly>
+            </div>
+            <button id="sendLoginLinkBtn" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:18px;" onclick="sendLoginLink()">
+                <i class="fa-solid fa-envelope-circle-check"></i> שלח קישור/קוד כניסה
+            </button>
+            <p id="authMessage" class="auth-message"></p>
+        </div>
+    </div>
 
     <div class="dashboard-container">
         <header>
@@ -490,6 +568,9 @@
             </div>
 
             <div class="header-actions">
+                <button class="btn btn-secondary" onclick="signOutAdmin()">
+                    <i class="fa-solid fa-right-from-bracket"></i> יציאה
+                </button>
                 <button class="btn btn-danger" onclick="resetSystem()">
                     <i class="fa-solid fa-rotate-left"></i> איפוס מערכת
                 </button>
@@ -570,12 +651,13 @@
                         <th>אופן קבלה</th>
                         <th>הערות</th>
                         <th>סכום סופי</th>
+                        <th>בדיקת תשלום</th>
                         <th>קבלה</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody">
                     <tr>
-                        <td colspan="10" style="text-align: center; padding: 40px; color: #64748b;">
+                        <td colspan="11" style="text-align: center; padding: 40px; color: #64748b;">
                             <i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים מאובטחים מ-Firebase...
                         </td>
                     </tr>
@@ -705,6 +787,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, onSnapshot, query, orderBy, writeBatch, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -719,32 +802,112 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const AUTHORIZED_EMAIL = "zm0548407450@gmail.com";
 
         window.allOrders = [];
         window.allReceipts = [];
+        window.productPrices = new Map();
 
-        const q = query(collection(db, "orders"), orderBy("date", "desc"));
-        const receiptsQuery = query(collection(db, "receipts"), orderBy("receiptNumber", "asc"));
+        let unsubscribeOrders = null;
+        let unsubscribeReceipts = null;
+        let unsubscribeProducts = null;
 
-        onSnapshot(receiptsQuery, (snapshot) => {
-            window.allReceipts = [];
-            snapshot.forEach((snapshotDoc) => {
-                window.allReceipts.push({ _docId: snapshotDoc.id, ...snapshotDoc.data() });
+        function stopSecureListeners() {
+            [unsubscribeOrders, unsubscribeReceipts, unsubscribeProducts].forEach((unsubscribe) => {
+                if (typeof unsubscribe === 'function') unsubscribe();
             });
-            applyFilters();
-        }, (error) => {
-            console.error("שגיאה במשיכת קבלות: ", error);
-        });
+            unsubscribeOrders = null;
+            unsubscribeReceipts = null;
+            unsubscribeProducts = null;
+        }
 
-        onSnapshot(q, (snapshot) => {
-            window.allOrders = [];
-            snapshot.forEach((snapshotDoc) => {
-                window.allOrders.push({ _docId: snapshotDoc.id, ...snapshotDoc.data() });
+        function startSecureListeners() {
+            stopSecureListeners();
+
+            const q = query(collection(db, "orders"), orderBy("date", "desc"));
+            const receiptsQuery = query(collection(db, "receipts"), orderBy("receiptNumber", "asc"));
+            const productsQuery = query(collection(db, "products"));
+
+            unsubscribeReceipts = onSnapshot(receiptsQuery, (snapshot) => {
+                window.allReceipts = [];
+                snapshot.forEach((snapshotDoc) => {
+                    window.allReceipts.push({ _docId: snapshotDoc.id, ...snapshotDoc.data() });
+                });
+                applyFilters();
+            }, (error) => {
+                console.error("שגיאה במשיכת קבלות: ", error);
             });
-            refreshCustomersDataList();
-            applyFilters();
-        }, (error) => {
-            console.error("שגיאה במשיכת נתונים: ", error);
+
+            unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
+                window.productPrices = new Map();
+                snapshot.forEach((snapshotDoc) => {
+                    const product = snapshotDoc.data();
+                    const productName = String(product.name || product.title || snapshotDoc.id).trim().toLowerCase();
+                    const price = Number(product.price ?? product.unitPrice ?? product.amount ?? 0);
+                    if (productName && Number.isFinite(price)) window.productPrices.set(productName, price);
+                });
+                applyFilters();
+            }, (error) => {
+                console.error("שגיאה במשיכת מחירי מוצרים: ", error);
+            });
+
+            unsubscribeOrders = onSnapshot(q, (snapshot) => {
+                window.allOrders = [];
+                snapshot.forEach((snapshotDoc) => {
+                    window.allOrders.push({ _docId: snapshotDoc.id, ...snapshotDoc.data() });
+                });
+                refreshCustomersDataList();
+                applyFilters();
+            }, (error) => {
+                console.error("שגיאה במשיכת נתונים: ", error);
+            });
+        }
+
+        async function completeEmailLinkSignIn() {
+            if (!isSignInWithEmailLink(auth, window.location.href)) return;
+            const email = window.localStorage.getItem('adminEmailForSignIn') || AUTHORIZED_EMAIL;
+            await signInWithEmailLink(auth, email, window.location.href);
+            window.localStorage.removeItem('adminEmailForSignIn');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        window.sendLoginLink = async () => {
+            const btn = document.getElementById('sendLoginLinkBtn');
+            const message = document.getElementById('authMessage');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> שולח...`;
+            try {
+                await sendSignInLinkToEmail(auth, AUTHORIZED_EMAIL, { url: window.location.href, handleCodeInApp: true });
+                window.localStorage.setItem('adminEmailForSignIn', AUTHORIZED_EMAIL);
+                message.innerText = `נשלח קישור/קוד כניסה אל ${AUTHORIZED_EMAIL}.`;
+            } catch (error) {
+                console.error('שגיאה בשליחת קישור כניסה:', error);
+                message.innerText = 'שליחת קישור הכניסה נכשלה. ודא שספק Email Link פעיל ב-Firebase Authentication.';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> שלח קישור/קוד כניסה`;
+            }
+        };
+
+        window.signOutAdmin = async () => {
+            await signOut(auth);
+        };
+
+        completeEmailLinkSignIn().catch((error) => console.error('שגיאה בהשלמת כניסה:', error));
+
+        onAuthStateChanged(auth, async (user) => {
+            const isAllowed = user?.email?.toLowerCase() === AUTHORIZED_EMAIL;
+            document.getElementById('authGate').classList.toggle('hidden', Boolean(isAllowed));
+            if (isAllowed) {
+                startSecureListeners();
+            } else {
+                stopSecureListeners();
+                window.allOrders = [];
+                window.allReceipts = [];
+                window.productPrices = new Map();
+                if (user) await signOut(auth);
+            }
         });
 
         window.fbAddOrder = async (data) => await addDoc(collection(db, "orders"), data);
@@ -981,7 +1144,7 @@
         function applyFilters() {
             const tbody = document.getElementById('ordersTableBody');
             if (!window.allOrders || window.allOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #64748b;">אין רשומות קיימות.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #64748b;">אין רשומות קיימות.</td></tr>`;
                 updateDashboardKPIs(0, 0);
                 currentFilteredOrders = [];
                 return;
@@ -1014,7 +1177,7 @@
 
             tbody.innerHTML = '';
             if(currentFilteredOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: #64748b;">לא נמצאו רשומות תואמות.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #64748b;">לא נמצאו רשומות תואמות.</td></tr>`;
                 return;
             }
 
@@ -1052,6 +1215,7 @@
                     <td><span class="${shippingClass}">${o.shippingMethod || 'איסוף עצמי'}</span></td>
                     <td style="font-size:0.85rem; color:#64748b; max-width:150px; overflow:hidden; text-overflow:ellipsis;">${o.customer?.notes || '-'}</td>
                     <td style="font-weight:800; color:var(--primary-light); font-size:1.1rem;">₪${o.totalPrice || 0}</td>
+                    <td>${getPaymentStatusHtml(o)}</td>
                     <td>
                         <button class="btn btn-receipt" onclick="event.stopPropagation(); printReceiptForOrder('${o._docId}')">
                             <i class="fa-solid fa-print"></i> ${getReceiptLabel(o._docId)}
@@ -1062,6 +1226,43 @@
             });
         }
 
+
+        function getExpectedOrderTotal(order) {
+            if (!Array.isArray(order.items) || order.items.length === 0 || !window.productPrices || window.productPrices.size === 0) {
+                return null;
+            }
+
+            let canCalculate = true;
+            const itemsTotal = order.items.reduce((sum, item) => {
+                const name = String(item.name || item.title || '').trim().toLowerCase();
+                const qty = Number(item.qty || item.quantity || 1);
+                const firebasePrice = window.productPrices.get(name);
+                if (!name || firebasePrice === undefined || !Number.isFinite(qty)) {
+                    canCalculate = false;
+                    return sum;
+                }
+                return sum + (firebasePrice * qty);
+            }, 0);
+
+            if (!canCalculate) return null;
+            return itemsTotal + (order.shippingMethod === 'משלוח' ? 35 : 0);
+        }
+
+        function getPaymentStatusHtml(order) {
+            const expectedTotal = getExpectedOrderTotal(order);
+            if (expectedTotal === null) {
+                return '<span class="payment-status unknown"><i class="fa-solid fa-circle-question"></i> אין מחיר מוצר</span>';
+            }
+
+            const actualTotal = Number(order.totalPrice || 0);
+            const gap = actualTotal - expectedTotal;
+            if (Math.abs(gap) < 0.01) {
+                return `<span class="payment-status match"><i class="fa-solid fa-circle-check"></i> תואם ₪${expectedTotal}</span>`;
+            }
+
+            const sign = gap > 0 ? '+' : '';
+            return `<span class="payment-status gap"><i class="fa-solid fa-triangle-exclamation"></i> פער ${sign}₪${gap}</span><br><small>צפוי: ₪${expectedTotal}</small>`;
+        }
 
         function getReceiptByOrderDocId(orderDocId) {
             return (window.allReceipts || []).find((receipt) => receipt.orderDocId === orderDocId);
