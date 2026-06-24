@@ -546,13 +546,17 @@
     <div id="authGate" class="auth-gate">
         <div class="auth-card">
             <h2><i class="fa-solid fa-lock"></i> כניסה מאובטחת</h2>
-            <p>הגישה למרכז הבקרה מוגבלת למייל המורשה בלבד. לחץ כדי לקבל קישור/קוד כניסה למייל.</p>
+            <p>הגישה למרכז הבקרה מוגבלת למייל המורשה בלבד. הזן את הקוד הקבוע כדי לשלוח קישור כניסה למייל המורשה.</p>
             <div class="form-group" style="margin-top: 18px;">
                 <label>מייל מורשה</label>
                 <input type="email" id="authEmail" class="form-control" value="zm0548407450@gmail.com" readonly>
             </div>
+            <div class="form-group" style="margin-top: 14px;">
+                <label for="adminAccessCode">קוד כניסה קבוע</label>
+                <input type="password" id="adminAccessCode" class="form-control" inputmode="numeric" autocomplete="one-time-code" placeholder="הזן קוד קבוע">
+            </div>
             <button id="sendLoginLinkBtn" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:18px;" onclick="sendLoginLink()">
-                <i class="fa-solid fa-envelope-circle-check"></i> שלח קישור/קוד כניסה
+                <i class="fa-solid fa-envelope-circle-check"></i> שלח קישור כניסה למייל המורשה
             </button>
             <p id="authMessage" class="auth-message"></p>
         </div>
@@ -804,6 +808,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         const AUTHORIZED_EMAIL = "zm0548407450@gmail.com";
+        const ADMIN_ACCESS_CODE = "0548407450";
 
         window.allOrders = [];
         window.allReceipts = [];
@@ -875,18 +880,23 @@
         window.sendLoginLink = async () => {
             const btn = document.getElementById('sendLoginLinkBtn');
             const message = document.getElementById('authMessage');
+            const enteredCode = document.getElementById('adminAccessCode').value.trim();
+            if (enteredCode !== ADMIN_ACCESS_CODE) {
+                message.innerText = 'קוד הכניסה שגוי. הקישור יישלח רק לאחר הזנת הקוד הקבוע.';
+                return;
+            }
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> שולח...`;
             try {
                 await sendSignInLinkToEmail(auth, AUTHORIZED_EMAIL, { url: window.location.href, handleCodeInApp: true });
                 window.localStorage.setItem('adminEmailForSignIn', AUTHORIZED_EMAIL);
-                message.innerText = `נשלח קישור/קוד כניסה אל ${AUTHORIZED_EMAIL}.`;
+                message.innerText = `נשלח קישור כניסה אל ${AUTHORIZED_EMAIL}.`;
             } catch (error) {
                 console.error('שגיאה בשליחת קישור כניסה:', error);
                 message.innerText = 'שליחת קישור הכניסה נכשלה. ודא שספק Email Link פעיל ב-Firebase Authentication.';
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> שלח קישור/קוד כניסה`;
+                btn.innerHTML = `<i class="fa-solid fa-envelope-circle-check"></i> שלח קישור כניסה למייל המורשה`;
             }
         };
 
