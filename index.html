@@ -169,8 +169,8 @@
             box-shadow: var(--shadow-elegant);
             margin-bottom: 25px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
             align-items: end;
             border: 1px solid rgba(212, 175, 55, 0.2);
             position: relative;
@@ -212,9 +212,13 @@
             font-weight: 600;
         }
 
+        .date-filter-group {
+            grid-column: span 2;
+        }
+
         .date-range-group {
             display: grid;
-            grid-template-columns: repeat(2, minmax(140px, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 10px;
         }
 
@@ -240,6 +244,7 @@
         }
 
         .form-control {
+            width: 100%;
             padding: 11px 14px;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
@@ -273,6 +278,10 @@
 
             .filter-card {
                 grid-template-columns: 1fr;
+            }
+
+            .date-filter-group {
+                grid-column: 1;
             }
 
             .date-range-group {
@@ -559,7 +568,7 @@
                 <label for="searchFilter"><i class="fa-solid fa-magnifying-glass"></i> חיפוש מהיר</label>
                 <input type="text" id="searchFilter" class="form-control" placeholder="שם / טלפון / מייל / מזהה" oninput="applyFilters()">
             </div>
-            <div class="form-group">
+            <div class="form-group date-filter-group">
                 <label><i class="fa-solid fa-calendar-days"></i> טווח תאריכים</label>
                 <div class="date-range-group">
                     <input type="date" id="dateFromFilter" class="form-control" aria-label="מתאריך" onchange="applyFilters()">
@@ -592,7 +601,8 @@
                         <th>תאריך ושעה</th>
                         <th>שם הלקוח</th>
                         <th>מספר טלפון</th>
-                        <th>עיר, כתובת ומייל</th>
+                        <th>עיר וכתובת</th>
+                        <th>מייל</th>
                         <th>פירוט סחורה</th>
                         <th>אופן קבלה</th>
                         <th>הערות</th>
@@ -603,7 +613,7 @@
                 </thead>
                 <tbody id="ordersTableBody">
                     <tr>
-                        <td colspan="11" style="text-align: center; padding: 40px; color: #64748b;">
+                        <td colspan="12" style="text-align: center; padding: 40px; color: #64748b;">
                             <i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים מאובטחים מ-Firebase...
                         </td>
                     </tr>
@@ -1043,7 +1053,7 @@
         function applyFilters() {
             const tbody = document.getElementById('ordersTableBody');
             if (!window.allOrders || window.allOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #64748b;">אין רשומות קיימות.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: #64748b;">אין רשומות קיימות.</td></tr>`;
                 updateDashboardKPIs(0, 0);
                 currentFilteredOrders = [];
                 return;
@@ -1076,7 +1086,7 @@
 
             tbody.innerHTML = '';
             if(currentFilteredOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: #64748b;">לא נמצאו רשומות תואמות.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; color: #64748b;">לא נמצאו רשומות תואמות.</td></tr>`;
                 return;
             }
 
@@ -1108,8 +1118,8 @@
                     <td>
                         <span style="font-weight:600;">${o.customer?.city || ''}</span>
                         ${fullAddressStr ? '<br><span style="font-size:0.8rem;color:#475569;">' + fullAddressStr + '</span>' : ''}
-                        ${o.customer?.email ? '<br><span style="font-size:0.8rem;color:#0284c7;direction:ltr;display:inline-block;">' + o.customer.email + '</span>' : ''}
                     </td>
+                    <td style="direction:ltr; text-align:right; color:#0284c7; font-size:0.85rem; word-break:break-word;">${o.customer?.email || '-'}</td>
                     <td>${itemsHtml}</td>
                     <td><span class="${shippingClass}">${o.shippingMethod || 'איסוף עצמי'}</span></td>
                     <td style="font-size:0.85rem; color:#64748b; max-width:150px; overflow:hidden; text-overflow:ellipsis;">${o.customer?.notes || '-'}</td>
