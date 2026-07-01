@@ -164,13 +164,13 @@
 
         .filter-card {
             background: linear-gradient(135deg, #ffffff 0%, #fbfaf7 100%);
-            padding: 24px;
+            padding: 18px;
             border-radius: 18px;
             box-shadow: var(--shadow-elegant);
-            margin-bottom: 25px;
+            margin-bottom: 18px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 18px;
+            gap: 14px;
             align-items: end;
             border: 1px solid rgba(212, 175, 55, 0.2);
             position: relative;
@@ -488,12 +488,13 @@
         .payment-status {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
-            padding: 5px 9px;
+            width: 24px;
+            height: 24px;
             border-radius: 999px;
-            font-size: 0.78rem;
+            font-size: 0.7rem;
             font-weight: 800;
-            margin-top: 6px;
             white-space: nowrap;
         }
 
@@ -508,8 +509,44 @@
         }
 
         .payment-status.unknown {
-            background: #f1f5f9;
-            color: #475569;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        @media (min-width: 1100px) {
+            .filter-card {
+                grid-template-columns: minmax(180px, 1.4fr) minmax(240px, 1.7fr) minmax(140px, 1fr) minmax(130px, 0.9fr) minmax(150px, 1fr) auto;
+                gap: 10px;
+                padding: 14px 16px;
+            }
+
+            .filter-card-header {
+                grid-column: auto;
+                align-items: end;
+                padding-bottom: 0;
+            }
+
+            .filter-card-title {
+                font-size: 1.05rem;
+                white-space: nowrap;
+            }
+
+            .filter-card-subtitle {
+                display: none;
+            }
+
+            .date-filter-group {
+                grid-column: auto;
+            }
+
+            .form-control {
+                min-height: 38px;
+                padding: 8px 10px;
+            }
+
+            .btn {
+                padding: 9px 13px;
+            }
         }
     </style>
 </head>
@@ -881,6 +918,24 @@
         let currentFilteredOrders = [];
         let recycleBin = [];
 
+        const DEFAULT_PRODUCT_PRICES = new Map([
+            ['אתרוג', 60],
+            ['לולב', 50],
+            ['הדסים', 40],
+            ['סט מהודר', 150],
+            ["סט מהודר א'", 180],
+            ['סט מפואר', 220]
+        ]);
+
+        const PRODUCT_ALIASES = [
+            { name: "סט מהודר א'", patterns: [/סט\s+מהודר\s+א['׳]?/g, /סטים\s+מהודרים\s+א['׳]?/g] },
+            { name: 'סט מהודר', patterns: [/סט\s+מהודר(?!\s*א['׳]?)/g, /סטים\s+מהודרים(?!\s*א['׳]?)/g] },
+            { name: 'סט מפואר', patterns: [/סט\s+מפואר/g, /סטים\s+מפוארים/g] },
+            { name: 'אתרוג', patterns: [/אתרוג(?:ים)?/g] },
+            { name: 'לולב', patterns: [/לולב(?:ים)?/g] },
+            { name: 'הדסים', patterns: [/הדסים/g] }
+        ];
+
         function toggleEditMode() {
             isEditMode = !isEditMode;
             const btn = document.getElementById('editModeToggleBtn');
@@ -1136,21 +1191,69 @@
         }
 
 
-        function getExpectedOrderTotal(order) {
-            if (!Array.isArray(order.items) || order.items.length === 0 || !window.productPrices || window.productPrices.size === 0) {
-                return null;
+        function getProductPrice(productName) {
+            const normalizedName = String(productName || '').trim().toLowerCase();
+            if (!normalizedName) return null;
+
+            const firebasePrice = window.productPrices?.get(normalizedName);
+            if (Number.isFinite(firebasePrice)) return firebasePrice;
+
+            const defaultPrice = DEFAULT_PRODUCT_PRICES.get(normalizedName);
+            return Number.isFinite(defaultPrice) ? defaultPrice : null;
+        }
+
+        function parseQuantityNearText(text, matchIndex, matchLength) {
+            const before = text.slice(Math.max(0, matchIndex - 18), matchIndex);
+            const after = text.slice(matchIndex + matchLength, matchIndex + matchLength + 18);
+            const beforeMatch = before.match(/(\d+)\s*$/);
+            if (beforeMatch) return Number(beforeMatch[1]);
+
+            const afterMatch = after.match(/^\s*(?:x|×|כמות:?|-)??\s*(\d+)/);
+            if (afterMatch) return Number(afterMatch[1]);
+
+            return 1;
+        }
+
+        function getOrderItemsForPriceCheck(order) {
+            if (Array.isArray(order.items) && order.items.length > 0) {
+                return order.items.map((item) => ({
+                    name: item.name || item.title || '',
+                    qty: Number(item.qty || item.quantity || 1)
+                }));
             }
 
+            const description = String(order.manualItemsDescription || '').trim();
+            if (!description) return [];
+
+            const normalizedDescription = description.replace(/[״"]/g, '').replace(/׳/g, "'").toLowerCase();
+            const parsedItems = [];
+            PRODUCT_ALIASES.forEach((product) => {
+                product.patterns.forEach((pattern) => {
+                    for (const match of normalizedDescription.matchAll(pattern)) {
+                        parsedItems.push({
+                            name: product.name,
+                            qty: parseQuantityNearText(normalizedDescription, match.index || 0, match[0].length)
+                        });
+                    }
+                });
+            });
+
+            return parsedItems;
+        }
+
+        function getExpectedOrderTotal(order) {
+            const orderItems = getOrderItemsForPriceCheck(order);
+            if (orderItems.length === 0) return null;
+
             let canCalculate = true;
-            const itemsTotal = order.items.reduce((sum, item) => {
-                const name = String(item.name || item.title || '').trim().toLowerCase();
-                const qty = Number(item.qty || item.quantity || 1);
-                const firebasePrice = window.productPrices.get(name);
-                if (!name || firebasePrice === undefined || !Number.isFinite(qty)) {
+            const itemsTotal = orderItems.reduce((sum, item) => {
+                const qty = Number(item.qty || 1);
+                const itemPrice = getProductPrice(item.name);
+                if (!Number.isFinite(itemPrice) || !Number.isFinite(qty)) {
                     canCalculate = false;
                     return sum;
                 }
-                return sum + (firebasePrice * qty);
+                return sum + (itemPrice * qty);
             }, 0);
 
             if (!canCalculate) return null;
@@ -1160,17 +1263,17 @@
         function getPaymentStatusHtml(order) {
             const expectedTotal = getExpectedOrderTotal(order);
             if (expectedTotal === null) {
-                return '<span class="payment-status unknown"><i class="fa-solid fa-circle-question"></i> אין מחיר מוצר</span>';
+                return '<span class="payment-status unknown" title="לא ניתן לחשב מחיר לפי פירוט הסחורה"><i class="fa-solid fa-circle"></i></span>';
             }
 
             const actualTotal = Number(order.totalPrice || 0);
             const gap = actualTotal - expectedTotal;
             if (Math.abs(gap) < 0.01) {
-                return `<span class="payment-status match"><i class="fa-solid fa-circle-check"></i> תואם ₪${expectedTotal}</span>`;
+                return `<span class="payment-status match" title="המחיר תואם לפירוט הסחורה: ₪${expectedTotal}"><i class="fa-solid fa-circle"></i></span>`;
             }
 
             const sign = gap > 0 ? '+' : '';
-            return `<span class="payment-status gap"><i class="fa-solid fa-triangle-exclamation"></i> פער ${sign}₪${gap}</span><br><small>צפוי: ₪${expectedTotal}</small>`;
+            return `<span class="payment-status gap" title="המחיר לא תואם. צפוי: ₪${expectedTotal}, בפועל: ₪${actualTotal}, פער: ${sign}₪${gap}"><i class="fa-solid fa-circle"></i></span>`;
         }
 
         function getReceiptByOrderDocId(orderDocId) {
