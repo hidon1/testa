@@ -476,42 +476,6 @@
             color: var(--primary-light);
         }
 
-        .auth-gate {
-            position: fixed;
-            inset: 0;
-            z-index: 3000;
-            background: linear-gradient(135deg, var(--primary-dark), #0f241b);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .auth-gate.hidden {
-            display: none;
-        }
-
-        .auth-card {
-            width: min(460px, 100%);
-            background: white;
-            border-radius: 18px;
-            padding: 28px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
-            border-top: 5px solid var(--gold);
-        }
-
-        .auth-card h2 {
-            color: var(--primary-dark);
-            font-family: 'Tinos', serif;
-            margin-bottom: 10px;
-        }
-
-        .auth-message {
-            margin-top: 14px;
-            color: #475569;
-            font-weight: 600;
-        }
-
         .payment-status {
             display: inline-flex;
             align-items: center;
@@ -543,21 +507,6 @@
 
 <body>
 
-    <div id="authGate" class="auth-gate">
-        <div class="auth-card">
-            <h2><i class="fa-solid fa-lock"></i> כניסה מאובטחת</h2>
-            <p>הגישה למרכז הבקרה מוגבלת למייל המורשה בלבד. התחבר עם Google כדי להיכנס ללא קוד.</p>
-            <div class="form-group" style="margin-top: 18px;">
-                <label>מייל מורשה</label>
-                <input type="email" id="authEmail" class="form-control" value="zm0548407450@gmail.com" readonly>
-            </div>
-            <button id="googleLoginBtn" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:18px;" onclick="signInWithGoogle()">
-                <i class="fa-brands fa-google"></i> התחבר עם Google
-            </button>
-            <p id="authMessage" class="auth-message"></p>
-        </div>
-    </div>
-
     <div class="dashboard-container">
         <header>
             <h1><i class="fa-solid fa-layer-group"></i> מרכז בקרה</h1>
@@ -568,9 +517,6 @@
             </div>
 
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="signOutAdmin()">
-                    <i class="fa-solid fa-right-from-bracket"></i> יציאה
-                </button>
                 <button class="btn btn-danger" onclick="resetSystem()">
                     <i class="fa-solid fa-rotate-left"></i> איפוס מערכת
                 </button>
@@ -787,7 +733,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDoc, onSnapshot, query, orderBy, writeBatch, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -802,12 +747,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
-        googleProvider.setCustomParameters({
-            prompt: "select_account"
-        });
-        const AUTHORIZED_EMAIL = "zm0548407450@gmail.com";
 
         window.allOrders = [];
         window.allReceipts = [];
@@ -817,7 +756,7 @@
         let unsubscribeReceipts = null;
         let unsubscribeProducts = null;
 
-        function stopSecureListeners() {
+        function stopFirebaseListeners() {
             [unsubscribeOrders, unsubscribeReceipts, unsubscribeProducts].forEach((unsubscribe) => {
                 if (typeof unsubscribe === 'function') unsubscribe();
             });
@@ -826,8 +765,8 @@
             unsubscribeProducts = null;
         }
 
-        function startSecureListeners() {
-            stopSecureListeners();
+        function startFirebaseListeners() {
+            stopFirebaseListeners();
 
             const q = query(collection(db, "orders"), orderBy("date", "desc"));
             const receiptsQuery = query(collection(db, "receipts"), orderBy("receiptNumber", "asc"));
@@ -868,48 +807,7 @@
             });
         }
 
-        window.signInWithGoogle = async () => {
-            const btn = document.getElementById('googleLoginBtn');
-            const message = document.getElementById('authMessage');
-            btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> מתחבר...`;
-            message.innerText = '';
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const signedInEmail = result.user?.email?.toLowerCase();
-                if (signedInEmail !== AUTHORIZED_EMAIL) {
-                    await signOut(auth);
-                    message.innerText = `הכניסה מותרת רק למייל ${AUTHORIZED_EMAIL}. נבחר: ${signedInEmail || 'לא זוהה מייל'}.`;
-                    return;
-                }
-                message.innerText = 'התחברת בהצלחה עם Google.';
-            } catch (error) {
-                console.error('שגיאה בכניסה עם Google:', error);
-                message.innerText = 'הכניסה עם Google נכשלה. ודא שספק Google פעיל ב-Firebase Authentication.';
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<i class="fa-brands fa-google"></i> התחבר עם Google`;
-            }
-        };
-
-        window.signOutAdmin = async () => {
-            await signOut(auth);
-        };
-
-
-        onAuthStateChanged(auth, async (user) => {
-            const isAllowed = user?.email?.toLowerCase() === AUTHORIZED_EMAIL;
-            document.getElementById('authGate').classList.toggle('hidden', Boolean(isAllowed));
-            if (isAllowed) {
-                startSecureListeners();
-            } else {
-                stopSecureListeners();
-                window.allOrders = [];
-                window.allReceipts = [];
-                window.productPrices = new Map();
-                if (user) await signOut(auth);
-            }
-        });
+        startFirebaseListeners();
 
         window.fbAddOrder = async (data) => await addDoc(collection(db, "orders"), data);
         window.fbUpdateOrder = async (id, data) => await updateDoc(doc(db, "orders", id), data);
