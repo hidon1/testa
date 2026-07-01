@@ -164,15 +164,15 @@
 
         .filter-card {
             background: linear-gradient(135deg, #ffffff 0%, #fbfaf7 100%);
-            padding: 24px;
-            border-radius: 18px;
-            box-shadow: var(--shadow-elegant);
+            padding: 26px;
+            border-radius: 22px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
             margin-bottom: 25px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
             align-items: end;
-            border: 1px solid rgba(212, 175, 55, 0.2);
+            border: 1px solid rgba(212, 175, 55, 0.24);
             position: relative;
             overflow: hidden;
         }
@@ -212,10 +212,27 @@
             font-weight: 600;
         }
 
+        .date-filter-group {
+            grid-column: span 2;
+            min-width: 360px;
+        }
+
         .date-range-group {
             display: grid;
-            grid-template-columns: repeat(2, minmax(140px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(2, minmax(170px, 1fr));
+            gap: 12px;
+        }
+
+        .date-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .date-field span {
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 800;
         }
 
         .filter-actions {
@@ -227,7 +244,8 @@
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 7px;
+            min-width: 0;
         }
 
         .form-group label {
@@ -240,14 +258,15 @@
         }
 
         .form-control {
-            padding: 11px 14px;
+            width: 100%;
+            padding: 12px 14px;
             border: 1px solid #cbd5e1;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 0.95rem;
             outline: none;
             transition: var(--transition-smooth);
             background-color: #f8fafc;
-            min-height: 44px;
+            min-height: 46px;
         }
 
         .form-control:focus {
@@ -258,7 +277,9 @@
 
         .form-control[type="date"] {
             color: #334155;
-            direction: rtl;
+            direction: ltr;
+            text-align: right;
+            min-width: 0;
         }
 
         .form-control[type="date"]::-webkit-calendar-picker-indicator {
@@ -273,6 +294,11 @@
 
             .filter-card {
                 grid-template-columns: 1fr;
+            }
+
+            .date-filter-group {
+                grid-column: auto;
+                min-width: 0;
             }
 
             .date-range-group {
@@ -340,6 +366,36 @@
             list-style: none;
             font-size: 0.88rem;
             color: #334155;
+        }
+
+
+        .customer-location-cell {
+            min-width: 190px;
+            line-height: 1.45;
+        }
+
+        .customer-city {
+            display: block;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+
+        .customer-address,
+        .customer-email {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.82rem;
+        }
+
+        .customer-address {
+            color: #475569;
+        }
+
+        .customer-email {
+            direction: ltr;
+            text-align: right;
+            color: #0284c7;
+            word-break: break-word;
         }
 
         .modal-overlay {
@@ -559,11 +615,17 @@
                 <label for="searchFilter"><i class="fa-solid fa-magnifying-glass"></i> חיפוש מהיר</label>
                 <input type="text" id="searchFilter" class="form-control" placeholder="שם / טלפון / מייל / מזהה" oninput="applyFilters()">
             </div>
-            <div class="form-group">
+            <div class="form-group date-filter-group">
                 <label><i class="fa-solid fa-calendar-days"></i> טווח תאריכים</label>
                 <div class="date-range-group">
-                    <input type="date" id="dateFromFilter" class="form-control" aria-label="מתאריך" onchange="applyFilters()">
-                    <input type="date" id="dateToFilter" class="form-control" aria-label="עד תאריך" onchange="applyFilters()">
+                    <label class="date-field" for="dateFromFilter">
+                        <span>מתאריך</span>
+                        <input type="date" id="dateFromFilter" class="form-control" onchange="applyFilters()">
+                    </label>
+                    <label class="date-field" for="dateToFilter">
+                        <span>עד תאריך</span>
+                        <input type="date" id="dateToFilter" class="form-control" onchange="applyFilters()">
+                    </label>
                 </div>
             </div>
             <div class="form-group">
@@ -1105,10 +1167,10 @@
                     <td style="white-space:nowrap; direction:ltr; text-align:right; font-size:0.85rem;">${convertToIsraelTime(o.date)}</td>
                     <td style="font-weight:600;">${o.customer?.name || '-'}</td>
                     <td>${o.customer?.phone || '-'}</td>
-                    <td>
-                        <span style="font-weight:600;">${o.customer?.city || ''}</span>
-                        ${fullAddressStr ? '<br><span style="font-size:0.8rem;color:#475569;">' + fullAddressStr + '</span>' : ''}
-                        ${o.customer?.email ? '<br><span style="font-size:0.8rem;color:#0284c7;direction:ltr;display:inline-block;">' + o.customer.email + '</span>' : ''}
+                    <td class="customer-location-cell">
+                        <span class="customer-city">${o.customer?.city || '-'}</span>
+                        ${fullAddressStr ? '<span class="customer-address">' + fullAddressStr + '</span>' : ''}
+                        ${o.customer?.email ? '<span class="customer-email">' + o.customer.email + '</span>' : ''}
                     </td>
                     <td>${itemsHtml}</td>
                     <td><span class="${shippingClass}">${o.shippingMethod || 'איסוף עצמי'}</span></td>
