@@ -804,6 +804,9 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({
+            prompt: "select_account"
+        });
         const AUTHORIZED_EMAIL = "zm0548407450@gmail.com";
 
         window.allOrders = [];
@@ -876,8 +879,10 @@
                 const signedInEmail = result.user?.email?.toLowerCase();
                 if (signedInEmail !== AUTHORIZED_EMAIL) {
                     await signOut(auth);
-                    message.innerText = 'הכניסה מותרת רק למייל המורשה.';
+                    message.innerText = `הכניסה מותרת רק למייל ${AUTHORIZED_EMAIL}. נבחר: ${signedInEmail || 'לא זוהה מייל'}.`;
+                    return;
                 }
+                message.innerText = 'התחברת בהצלחה עם Google.';
             } catch (error) {
                 console.error('שגיאה בכניסה עם Google:', error);
                 message.innerText = 'הכניסה עם Google נכשלה. ודא שספק Google פעיל ב-Firebase Authentication.';
