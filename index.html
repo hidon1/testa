@@ -713,7 +713,7 @@
                         <label>אופן קבלת ההזמנה</label>
                         <select id="fShipping" class="form-control" onchange="calculateFormTotal()">
                             <option value="איסוף עצמי">איסוף עצמי (₪0)</option>
-                            <option value="משלוח">משלוח ממוזג (₪35)</option>
+                            <option value="משלוח">משלוח ממוזג (₪45)</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -927,6 +927,8 @@
             ['סט מפואר', 220]
         ]);
 
+        const SHIPPING_COST = 45;
+
         const PRODUCT_ALIASES = [
             { name: "סט מהודר א'", patterns: [/סט\s+מהודר\s+א['׳]?/g, /סטים\s+מהודרים\s+א['׳]?/g] },
             { name: 'סט מהודר', patterns: [/סט\s+מהודר(?!\s*א['׳]?)/g, /סטים\s+מהודרים(?!\s*א['׳]?)/g] },
@@ -997,7 +999,7 @@
                 document.getElementById('fItemsText').value = order.manualItemsDescription || '';
             }
 
-            const shippingCost = order.shippingMethod === 'משלוח' ? 35 : 0;
+            const shippingCost = order.shippingMethod === 'משלוח' ? SHIPPING_COST : 0;
             const itemsNetPrice = (order.totalPrice || 0) - shippingCost;
             document.getElementById('fItemsPrice').value = itemsNetPrice >= 0 ? itemsNetPrice : 0;
 
@@ -1021,7 +1023,7 @@
         function calculateFormTotal() {
             const itemsPrice = parseFloat(document.getElementById('fItemsPrice').value) || 0;
             const shipping = document.getElementById('fShipping').value;
-            const total = itemsPrice + (shipping === 'משלוח' ? 35 : 0);
+            const total = itemsPrice + (shipping === 'משלוח' ? SHIPPING_COST : 0);
             document.getElementById('fTotalLabel').innerText = `₪${total}`;
         }
 
@@ -1195,11 +1197,11 @@
             const normalizedName = String(productName || '').trim().toLowerCase();
             if (!normalizedName) return null;
 
-            const firebasePrice = window.productPrices?.get(normalizedName);
-            if (Number.isFinite(firebasePrice)) return firebasePrice;
-
             const defaultPrice = DEFAULT_PRODUCT_PRICES.get(normalizedName);
-            return Number.isFinite(defaultPrice) ? defaultPrice : null;
+            if (Number.isFinite(defaultPrice)) return defaultPrice;
+
+            const firebasePrice = window.productPrices?.get(normalizedName);
+            return Number.isFinite(firebasePrice) ? firebasePrice : null;
         }
 
         function parseQuantityNearText(text, matchIndex, matchLength) {
@@ -1257,7 +1259,7 @@
             }, 0);
 
             if (!canCalculate) return null;
-            return itemsTotal + (order.shippingMethod === 'משלוח' ? 35 : 0);
+            return itemsTotal + (order.shippingMethod === 'משלוח' ? SHIPPING_COST : 0);
         }
 
         function getPaymentStatusHtml(order) {
@@ -1507,7 +1509,7 @@
             const manualItemsDescription = document.getElementById('fItemsText').value;
             const notes = document.getElementById('fNotes').value;
             
-            const total = itemsPrice + (shipping === 'משלוח' ? 35 : 0);
+            const total = itemsPrice + (shipping === 'משלוח' ? SHIPPING_COST : 0);
 
             try {
                 if (docId) {
