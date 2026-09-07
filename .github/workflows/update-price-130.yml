@@ -1,0 +1,34 @@
+name: Update admin price to 130
+
+on:
+  push:
+    paths:
+      - '.github/workflows/update-price-130.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update admin unit price
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('>₪120<', '>₪130<')
+          s = s.replace('מחיר סט: ₪120', 'מחיר סט: ₪130')
+          s = s.replace("UNIT_PRICE=120,DELIVERY_PRICE=45", "UNIT_PRICE=130,DELIVERY_PRICE=45")
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Change admin unit price to 130"
+          git push
