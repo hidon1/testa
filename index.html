@@ -34,7 +34,7 @@
   <header>
     <div class="header-row">
       <div class="title"><h1>ניהול שוק ארבעת המינים</h1><p>ניהול הזמנות, תשלומים ולקוחות במקום אחד.</p></div>
-      <div class="product-pill"><div><div class="sku">AM-001</div><strong>סט ארבעת המינים כשר לכתחילה</strong></div><div style="font-size:1.5rem;font-weight:900">₪120</div></div>
+      <div class="product-pill"><div><div class="sku">AM-001</div><strong>סט ארבעת המינים כשר לכתחילה</strong></div><div style="font-size:1.5rem;font-weight:900">₪130</div></div>
       <div class="header-actions"><button class="btn btn-primary" onclick="openNewOrder()"><i class="fa-solid fa-plus"></i> הזמנה ידנית חדשה</button><button id="resetAllBtn" class="btn btn-danger" onclick="resetAllOrders()" title="מחיקת כל ההזמנות והתחלת המספור מחדש"><i class="fa-solid fa-trash-can-arrow-up"></i> איפוס המערכת</button></div>
     </div>
   </header>
@@ -58,7 +58,7 @@
     <div class="table-head"><div><h2>הזמנות</h2><div class="mini" id="visibleCount">מציג 0 הזמנות</div></div><button class="btn btn-ghost" onclick="openNewOrder()"><i class="fa-solid fa-file-circle-plus"></i> הזמנה חדשה</button></div>
     <div class="table-scroll"><table><thead><tr><th>מס׳ קבלה / הזמנה</th><th>תאריך</th><th>לקוח</th><th>טלפון</th><th>כמות</th><th>קבלה</th><th>סכום</th><th>סטטוס</th><th>הערות</th><th>פעולות</th></tr></thead><tbody id="ordersBody"><tr><td class="empty" colspan="10"><i class="fa-solid fa-spinner fa-spin"></i> טוען הזמנות...</td></tr></tbody></table></div>
   </section>
-  <div class="legend"><span><i class="dot green"></i> שולם</span><span><i class="dot red"></i> לא שולם</span><span>מחיר סט: ₪120 · משלוח: ₪45</span></div>
+  <div class="legend"><span><i class="dot green"></i> שולם</span><span><i class="dot red"></i> לא שולם</span><span>מחיר סט: ₪130 · משלוח: ₪45</span></div>
 </div>
 
 <div class="modal" id="orderModal" onclick="if(event.target===this)closeOrderModal()">
@@ -80,7 +80,7 @@
         <div class="field address"><label>מס׳ דירה</label><input id="fApartment" class="control"></div>
         <div class="field full"><label>הערות</label><textarea id="fNotes" class="control" placeholder="כל הערה שחשוב לשמור עם ההזמנה"></textarea></div>
         <label class="checkline full"><input id="fPaid" type="checkbox"> ההזמנה שולמה</label>
-        <div class="summary-box"><span>סכום ההזמנה</span><strong id="formTotal">₪120</strong></div>
+        <div class="summary-box"><span>סכום ההזמנה</span><strong id="formTotal">₪130</strong></div>
       </div>
       <div class="form-footer"><button id="saveOrderBtn" type="submit" class="btn btn-save"><i class="fa-solid fa-floppy-disk"></i> שמירה</button><button type="button" class="btn btn-secondary" onclick="closeOrderModal()">ביטול</button></div>
     </form>
@@ -121,7 +121,7 @@
   window.setPaid=(id,isPaid)=>updateDoc(doc(db,'orders',id),{paid:isPaid,paymentStatus:isPaid?'paid':'unpaid',paidUpdatedAt:new Date().toISOString()});
 </script>
 <script>
-  const SKU='AM-001',PRODUCT_NAME='סט ארבעת המינים כשר לכתחילה',UNIT_PRICE=120,DELIVERY_PRICE=45;
+  const SKU='AM-001',PRODUCT_NAME='סט ארבעת המינים כשר לכתחילה',UNIT_PRICE=130,DELIVERY_PRICE=45;
   function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
   function isPaid(o){return o.paid===true||o.paymentStatus==='paid'}
   function qty(o){if(Array.isArray(o.items)&&o.items.length)return Number(o.items[0]?.qty||o.items[0]?.quantity||1)||1;return Number(o.qty||1)||1}
