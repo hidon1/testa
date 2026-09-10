@@ -1,10 +1,295 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>ניהול הזמנות | שוק ארבעת המינים</title><meta name="theme-color" content="#153b2a">
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Frank+Ruhl+Libre:wght@700;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ניהול הזמנות | שוק ארבעת המינים</title>
+<meta name="theme-color" content="#153b2a">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&family=Frank+Ruhl+Libre:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+</script>
 <style>
 :root{--green:#153b2a;--green2:#256846;--gold:#d9ad38;--ink:#193126;--muted:#6b7b72;--line:#dfe9e2;--red:#bf2525;--redBg:#fff0f0;--ok:#16834a;--okBg:#eaf8ef;--orange:#a6630e;--orangeBg:#fff6df;--blue:#2f6e9d;--shadow:0 18px 48px rgba(21,59,42,.12)}*{box-sizing:border-box}body{margin:0;font-family:Heebo,Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f7fbf7,#fffaf0);min-height:100vh}.wrap{width:min(1540px,95%);margin:auto;padding-bottom:36px}header{margin:18px auto 16px;background:linear-gradient(135deg,#123822,#216846 62%,#92701f);color:#fff;border-radius:28px;padding:24px 28px;box-shadow:var(--shadow)}.header-row{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}.title h1{margin:0;font-family:'Frank Ruhl Libre',serif;color:#ffe47d;font-size:clamp(2rem,4vw,3.3rem)}.title p{margin:5px 0 0;color:#e6f1e9}.product-pill{display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:12px 16px;border-radius:18px}.product-pill strong{color:#ffe47d}.sku{font-weight:900}.header-actions,.table-actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:14px;padding:11px 15px;font:inherit;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn-primary{background:linear-gradient(135deg,#e3bb4f,#c99720);color:#193126}.btn-secondary{background:#edf3ee;color:var(--green)}.btn-ghost{background:#fff;color:var(--green);border:1px solid var(--line)}.btn-excel{background:#eaf7ee;color:#116b39;border:1px solid #bfe0ca}.btn-save{background:linear-gradient(135deg,#1d7549,#124b30);color:#fff}.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:13px;margin-bottom:16px}.stat{background:#fff;border:1px solid rgba(45,123,82,.13);border-radius:21px;padding:17px;box-shadow:0 10px 30px rgba(23,63,45,.08)}.stat .label{color:var(--muted);font-weight:700;font-size:.88rem}.stat .value{font-size:1.75rem;font-weight:900}.stat.paid .value{color:var(--ok)}.stat.unpaid .value,.stat.failed .value{color:var(--red)}.stat.today .value{color:var(--blue)}.toolbar{background:#fff;border:1px solid var(--line);border-radius:22px;padding:15px;display:grid;grid-template-columns:minmax(260px,2fr) repeat(2,minmax(160px,1fr)) auto;gap:12px;align-items:end;margin-bottom:16px}.field{display:grid;gap:6px}.field label{font-size:.84rem;color:var(--muted);font-weight:800}.control{width:100%;border:1px solid #cedbd1;border-radius:13px;background:#fbfdfb;padding:11px 12px;font:inherit}.table-card{background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:var(--shadow)}.table-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 19px;border-bottom:1px solid var(--line);flex-wrap:wrap}.table-head h2{margin:0}.mini{font-size:.8rem;color:var(--muted)}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1320px}th{background:#edf5ef;padding:13px 11px;text-align:right;white-space:nowrap}td{padding:13px 11px;border-bottom:1px solid #edf2ee;vertical-align:middle}tbody tr.payment-failed-row{background:#fff0f0}.receipt-number{display:inline-flex;padding:6px 11px;border-radius:999px;background:#153b2a;color:#fff;font-weight:900}.receipt-order-id{margin-top:5px;color:var(--muted);font-size:.76rem}.money{font-weight:900;color:var(--green2)}.badge{display:inline-flex;border-radius:999px;padding:7px 10px;font-size:.82rem;font-weight:900}.badge.pickup{background:#eef3ef;color:#40564a}.badge.delivery{background:#edf7ff;color:#20618e}.pay-state{display:inline-flex;align-items:center;gap:7px;border-radius:14px;padding:9px 11px;font-size:.8rem;font-weight:900;line-height:1.25}.pay-state.paid{background:var(--okBg);color:var(--ok)}.pay-state.pending{background:var(--orangeBg);color:var(--orange)}.pay-state.failed{background:#ffdede;color:#a90000;border:2px solid #e63232;box-shadow:0 0 0 3px rgba(230,50,50,.08)}.failed-note{display:block;margin-top:4px;color:#b40000;font-weight:900;font-size:.76rem}.row-actions{display:flex;gap:7px}.icon-btn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--green)}.icon-btn.delete{color:var(--red)}.empty{text-align:center!important;padding:55px!important;color:var(--muted)}.modal{position:fixed;inset:0;background:rgba(7,25,16,.58);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}.modal.active{display:flex}.modal-card{width:min(760px,100%);max-height:94vh;overflow:auto;background:#fff;border-radius:25px}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--line)}.close-btn{width:40px;height:40px;border:0;border-radius:12px;background:#eff5f0}.form-body{padding:21px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.full{grid-column:1/-1}.form-footer{display:flex;gap:10px;padding-top:20px}.checkline{display:flex;align-items:center;gap:9px;padding:11px 12px;background:#f4f8f5;border-radius:13px}.summary-box{grid-column:1/-1;background:#f6fbf7;border:1px solid var(--line);border-radius:17px;padding:14px 16px;display:flex;justify-content:space-between}.toast{position:fixed;left:20px;bottom:20px;background:#163b2a;color:#fff;border-radius:14px;padding:12px 16px;display:none}.toast.show{display:block}@media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}.toolbar{grid-template-columns:1fr 1fr}}@media(max-width:680px){.stats{grid-template-columns:1fr 1fr}.toolbar{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.full,.summary-box{grid-column:auto}}
-</style></head><body><div class="wrap"><header><div class="header-row"><div class="title"><h1>ניהול שוק ארבעת המינים</h1><p>ניהול הזמנות, תשלומים ולקוחות במקום אחד.</p></div><div class="product-pill"><div><div class="sku">AM-001</div><strong>סט ארבעת המינים מהודר א׳ א׳</strong></div><div style="font-size:1.5rem;font-weight:900">₪130</div></div><div class="header-actions"><button class="btn btn-primary" onclick="openNewOrder()"><i class="fa-solid fa-plus"></i> הזמנה ידנית חדשה</button><button class="btn btn-excel" onclick="exportExcel(true)"><i class="fa-solid fa-file-excel"></i> Excel כל ההזמנות</button></div></div></header><section class="stats"><div class="stat"><div class="label">סה״כ רשומות</div><div class="value" id="totalOrders">0</div></div><div class="stat today"><div class="label">היום</div><div class="value" id="todayOrders">0</div></div><div class="stat"><div class="label">סה״כ סטים</div><div class="value" id="totalUnits">0</div></div><div class="stat paid"><div class="label">שולם</div><div class="value" id="paidCount">0</div></div><div class="stat unpaid"><div class="label">ממתין לתשלום</div><div class="value" id="pendingCount">0</div></div><div class="stat failed"><div class="label">תשלום נכשל</div><div class="value" id="failedCount">0</div></div></section><section class="toolbar"><div class="field"><label>חיפוש</label><input id="search" class="control" placeholder="שם, טלפון, אימייל, עיר או מספר הזמנה" oninput="render()"></div><div class="field"><label>סטטוס תשלום</label><select id="paymentFilter" class="control" onchange="render()"><option value="all">הכול</option><option value="paid">שולם</option><option value="pending">ממתין</option><option value="failed">תשלום נכשל</option></select></div><div class="field"><label>אופן קבלה</label><select id="shippingFilter" class="control" onchange="render()"><option value="all">הכול</option><option value="איסוף עצמי">איסוף עצמי</option><option value="משלוח">משלוח</option></select></div><button class="btn btn-secondary" onclick="clearFilters()">ניקוי</button></section><section class="table-card"><div class="table-head"><div><h2>הזמנות</h2><div class="mini" id="visibleCount">מציג 0</div></div><div class="table-actions"><button class="btn btn-excel" onclick="exportExcel(false)"><i class="fa-solid fa-file-excel"></i> Excel לפי החיפוש</button><button class="btn btn-ghost" onclick="openNewOrder()">הזמנה חדשה</button></div></div><div class="table-scroll"><table><thead><tr><th>מס׳ קבלה / הזמנה</th><th>תאריך</th><th>לקוח</th><th>טלפון</th><th>כמות</th><th>קבלה</th><th>סכום</th><th>סטטוס תשלום</th><th>הערות</th><th>פעולות</th></tr></thead><tbody id="ordersBody"><tr><td class="empty" colspan="10">טוען הזמנות...</td></tr></tbody></table></div></section></div><div class="modal" id="orderModal" onclick="if(event.target===this)closeOrderModal()"><div class="modal-card"><div class="modal-head"><h2 id="modalTitle">הזמנה חדשה</h2><button class="close-btn" onclick="closeOrderModal()">×</button></div><form id="orderForm" class="form-body" onsubmit="saveOrder(event)"><input type="hidden" id="editDocId"><input type="hidden" id="editOrderId"><div class="form-grid"><div class="field"><label>שם לקוח *</label><input id="fName" class="control" required></div><div class="field"><label>טלפון *</label><input id="fPhone" class="control" required></div><div class="field"><label>אימייל</label><input id="fEmail" type="email" class="control"></div><div class="field"><label>כמות סטים *</label><input id="fQty" type="number" min="1" value="1" class="control" required oninput="refreshFormTotal()"></div><div class="field"><label>אופן קבלה</label><select id="fShipping" class="control" onchange="toggleAddress();refreshFormTotal()"><option value="איסוף עצמי">איסוף עצמי</option><option value="משלוח">משלוח (+₪45)</option></select></div><div class="field"><label>תאריך</label><input id="fDate" type="datetime-local" class="control"></div><div class="field address"><label>עיר</label><input id="fCity" class="control"></div><div class="field address"><label>רחוב</label><input id="fStreet" class="control"></div><div class="field address"><label>בית</label><input id="fHouse" class="control"></div><div class="field address"><label>דירה</label><input id="fApartment" class="control"></div><div class="field full"><label>הערות</label><textarea id="fNotes" class="control"></textarea></div><label class="checkline full"><input id="fPaid" type="checkbox"> ההזמנה שולמה</label><div class="summary-box"><span>סכום ההזמנה</span><strong id="formTotal">₪130</strong></div></div><div class="form-footer"><button id="saveOrderBtn" type="submit" class="btn btn-save">שמירה</button><button type="button" class="btn btn-secondary" onclick="closeOrderModal()">ביטול</button></div></form></div></div><div class="toast" id="toast"></div>
-<script type="module">import{initializeApp}from"https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,onSnapshot,query,orderBy}from"https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";const cfg={apiKey:"AIzaSyBG8ZiYOdVdI45AsKnMcbX6QaVlkU4dXhM",authDomain:"etrog-d0bcb.firebaseapp.com",projectId:"etrog-d0bcb",storageBucket:"etrog-d0bcb.firebasestorage.app",messagingSenderId:"215951557108",appId:"1:215951557108:web:8531faf1b1e512822d79a1"};const db=getFirestore(initializeApp(cfg));window.orders=[];const q=query(collection(db,'orders'),orderBy('date','desc'));onSnapshot(q,s=>{window.orders=s.docs.map(d=>({_docId:d.id,...d.data()}));window.render()},e=>{console.error(e);ordersBody.innerHTML='<tr><td class="empty" colspan="10">שגיאה בטעינת הנתונים.</td></tr>'});window.dbCreateOrder=p=>addDoc(collection(db,'orders'),p);window.dbUpdateOrder=(id,p)=>updateDoc(doc(db,'orders',id),p);window.dbDeleteOrder=id=>deleteDoc(doc(db,'orders',id));window.setPaid=(id,v)=>updateDoc(doc(db,'orders',id),{paid:v,paymentStatus:v?'paid':'unpaid',orderStatus:v?'completed':'waiting_for_payment',paidUpdatedAt:new Date().toISOString()});</script>
-<script>const SKU='AM-001',PRODUCT_NAME='סט ארבעת המינים מהודר א׳ א׳',UNIT_PRICE=130,DELIVERY_PRICE=45;function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}function qty(o){return Number(o.items?.[0]?.qty||o.qty||1)||1}function formatDate(v){if(!v)return'-';return new Date(v).toLocaleString('he-IL')}function paymentState(o){const s=String(o.paymentStatus||'').toLowerCase();if(o.paid===true||['paid','paid_client_return'].includes(s))return{key:'paid',label:'שולם',icon:'fa-circle-check'};if(['payment_failed','failed','failure','declined'].includes(s)||o.orderStatus==='not_completed')return{key:'failed',label:'תשלום לא בוצע · הזמנה לא בוצעה',icon:'fa-circle-xmark'};return{key:'pending',label:'ממתין לתשלום',icon:'fa-clock'}}function getFilteredOrders(){const term=search.value.trim().toLowerCase(),pf=paymentFilter.value,sf=shippingFilter.value;return(window.orders||[]).filter(o=>{const c=o.customer||{},st=paymentState(o);return(!term||[o.receiptNumber,o.orderId,c.name,c.phone,c.email,c.city].some(v=>String(v||'').toLowerCase().includes(term)))&&(pf==='all'||st.key===pf)&&(sf==='all'||(o.shippingMethod||'איסוף עצמי')===sf)})}function clearFilters(){search.value='';paymentFilter.value='all';shippingFilter.value='all';render()}function sameDay(a,b=new Date()){const d=new Date(a);return d.toDateString()===b.toDateString()}async function togglePaid(id,current,button){button.disabled=true;try{await window.setPaid(id,!current)}finally{button.disabled=false}}function render(){const all=window.orders||[],f=getFilteredOrders(),states=all.map(paymentState);totalOrders.textContent=all.length;todayOrders.textContent=all.filter(o=>sameDay(o.date)).length;totalUnits.textContent=all.reduce((s,o)=>s+qty(o),0);paidCount.textContent=states.filter(s=>s.key==='paid').length;pendingCount.textContent=states.filter(s=>s.key==='pending').length;failedCount.textContent=states.filter(s=>s.key==='failed').length;visibleCount.textContent=`מציג ${f.length} מתוך ${all.length}`;ordersBody.innerHTML=f.length?f.map(o=>{const st=paymentState(o),q=qty(o),ship=o.shippingMethod||'איסוף עצמי',c=o.customer||{},paid=st.key==='paid';return`<tr class="${st.key==='failed'?'payment-failed-row':''}"><td><span class="receipt-number">#${String(Number(o.receiptNumber)||0).padStart(3,'0')}</span><div class="receipt-order-id">${esc(o.orderId||'-')}</div></td><td>${esc(formatDate(o.date))}</td><td><strong>${esc(c.name||'-')}</strong><div class="mini">${esc(c.city||'')}</div></td><td>${esc(c.phone||'-')}<div class="mini">${esc(c.email||'')}</div></td><td>${q}</td><td><span class="badge ${ship==='משלוח'?'delivery':'pickup'}">${esc(ship)}</span></td><td class="money">₪${Number(o.totalPrice||q*UNIT_PRICE).toLocaleString('he-IL')}</td><td><div class="pay-state ${st.key}"><i class="fa-solid ${st.icon}"></i>${esc(st.label)}</div>${st.key==='failed'?'<span class="failed-note">אין להכין הזמנה לפני בדיקת תשלום</span>':''}<div style="margin-top:7px"><button class="btn btn-ghost" style="padding:6px 9px;font-size:.72rem" onclick="togglePaid('${o._docId}',${paid},this)">${paid?'סמן לא שולם':'סמן שולם ידנית'}</button></div></td><td>${esc(c.notes||o.notes||'-')}</td><td><div class="row-actions"><button class="icon-btn" onclick="openEditOrder('${o._docId}')">✎</button><button class="icon-btn delete" onclick="deleteOrder('${o._docId}')">🗑</button></div></td></tr>`}).join(''):'<tr><td class="empty" colspan="10">לא נמצאו הזמנות תואמות.</td></tr>'}function exportExcel(allRows){const rows=allRows?(window.orders||[]):getFilteredOrders();if(!rows.length){alert('אין נתונים לייצוא.');return}const data=rows.map(o=>{const c=o.customer||{},st=paymentState(o),q=qty(o),ship=o.shippingMethod||'איסוף עצמי';return{'מספר קבלה':Number(o.receiptNumber)||'','מספר הזמנה':o.orderId||'','תאריך':formatDate(o.date),'שם לקוח':c.name||'','טלפון':c.phone||'','אימייל':c.email||'','כמות':q,'אופן קבלה':ship,'עיר':c.city||'','רחוב':c.street||'','בית':c.houseNumber||c.house||'','דירה':c.apartmentNumber||c.apartment||'','סכום':Number(o.totalPrice||q*UNIT_PRICE),'סטטוס תשלום':st.label,'הערות':c.notes||o.notes||''}});const ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'הזמנות');XLSX.writeFile(wb,allRows?'orders-all.xlsx':'orders-filtered.xlsx')}function toLocalInput(iso){const d=iso?new Date(iso):new Date(),p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}function openNewOrder(){orderForm.reset();editDocId.value='';editOrderId.value='';fQty.value=1;fDate.value=toLocalInput();fShipping.value='איסוף עצמי';toggleAddress();refreshFormTotal();orderModal.classList.add('active')}function openEditOrder(id){const o=(window.orders||[]).find(x=>x._docId===id);if(!o)return;const c=o.customer||{};editDocId.value=id;editOrderId.value=o.orderId||'';fName.value=c.name||'';fPhone.value=c.phone||'';fEmail.value=c.email||'';fQty.value=qty(o);fShipping.value=o.shippingMethod||'איסוף עצמי';fDate.value=toLocalInput(o.date);fCity.value=c.city||'';fStreet.value=c.street||'';fHouse.value=c.houseNumber||c.house||'';fApartment.value=c.apartmentNumber||c.apartment||'';fNotes.value=c.notes||o.notes||'';fPaid.checked=paymentState(o).key==='paid';toggleAddress();refreshFormTotal();orderModal.classList.add('active')}function closeOrderModal(){orderModal.classList.remove('active')}function toggleAddress(){document.querySelectorAll('.address').forEach(el=>el.style.display=fShipping.value==='משלוח'?'grid':'none')}function refreshFormTotal(){formTotal.textContent='₪'+(Math.max(1,Number(fQty.value||1))*UNIT_PRICE+(fShipping.value==='משלוח'?DELIVERY_PRICE:0))}function manualOrderId(){return'MAN-'+Date.now()}async function saveOrder(e){e.preventDefault();const q=Math.max(1,Number(fQty.value||1)),ship=fShipping.value,paid=fPaid.checked,payload={orderId:editOrderId.value||manualOrderId(),customer:{name:fName.value.trim(),phone:fPhone.value.trim(),email:fEmail.value.trim(),notes:fNotes.value.trim(),city:fCity.value.trim(),street:fStreet.value.trim(),houseNumber:fHouse.value.trim(),apartmentNumber:fApartment.value.trim()},items:[{id:1,sku:SKU,name:PRODUCT_NAME,qty:q,price:UNIT_PRICE}],paid,paymentStatus:paid?'paid':'unpaid',orderStatus:paid?'completed':'waiting_for_payment',shippingMethod:ship,totalPrice:q*UNIT_PRICE+(ship==='משלוח'?DELIVERY_PRICE:0),date:fDate.value?new Date(fDate.value).toISOString():new Date().toISOString(),manual:true};if(editDocId.value)await window.dbUpdateOrder(editDocId.value,payload);else await window.dbCreateOrder(payload);closeOrderModal()}async function deleteOrder(id){if(confirm('למחוק את ההזמנה?'))await window.dbDeleteOrder(id)}</script></body></html>
+</style>
+<style>
+.btn-danger{background:#fff0f0;color:#a71818;border:1px solid #efb7b7}
+.btn-danger:hover{background:#ffe3e3}
+.stats{grid-template-columns:repeat(5,1fr)}
+.product-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:16px}
+.product-stat{appearance:none;width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 19px;border:1px solid rgba(45,123,82,.16);border-radius:21px;background:#fff;box-shadow:0 10px 30px rgba(23,63,45,.08);font:inherit;text-align:right;cursor:pointer;transition:.2s ease}
+.product-stat:hover,.product-stat.active{transform:translateY(-2px);border-color:#d0a52f;box-shadow:0 15px 36px rgba(23,63,45,.13)}
+.product-stat.active{background:linear-gradient(135deg,#fffdf4,#f5edc8)}
+.product-stat-name{display:grid;gap:3px;font-weight:900;color:var(--green)}
+.product-stat-name small{font-size:.78rem;font-weight:700;color:var(--muted)}
+.product-stat-value{min-width:46px;height:46px;display:grid;place-items:center;border-radius:15px;background:var(--green);color:#ffe47d;font-size:1.45rem;font-weight:900}
+.toolbar{grid-template-columns:minmax(240px,2fr) repeat(3,minmax(145px,1fr)) auto}
+.product-lines{display:grid;gap:5px;min-width:190px}
+.product-line{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 9px;border-radius:10px;background:#f4f8f5;color:#294b39;font-size:.86rem;font-weight:700}
+.product-line strong{color:var(--green)}
+.receipt-number.no-receipt{background:#eef3ef;color:#4b6155}
+.payment-attempt-note{display:block;margin-top:5px;color:#a6630e;font-size:.76rem;font-weight:800}
+.row-actions{align-items:center}
+.row-delete-btn{padding:8px 10px;border:1px solid #efc3c3;border-radius:11px;background:#fff3f3;color:#a71818;font:inherit;font-size:.82rem;font-weight:900;cursor:pointer;white-space:nowrap}
+.product-qty-wrap{grid-column:1/-1}
+.product-qty-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.product-qty-card{display:grid;gap:6px;padding:12px;border:1px solid var(--line);border-radius:15px;background:#f8fbf8;color:var(--green);font-weight:800}
+.product-qty-card input{text-align:center}
+.unknown-items-note{display:none;grid-column:1/-1;padding:10px 12px;border-radius:12px;background:#fff6df;color:#85520f;font-size:.84rem}
+.unknown-items-note.visible{display:block}
+@media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}.toolbar{grid-template-columns:1fr 1fr}.product-summary{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:680px){.product-summary{grid-template-columns:1fr}.product-qty-grid{grid-template-columns:1fr}.header-actions .btn{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="header-row">
+<div class="title">
+<h1>ניהול שוק ארבעת המינים</h1>
+<p>ניהול הזמנות, תשלומים ולקוחות במקום אחד.</p>
+</div>
+<div class="product-pill">
+<div>
+<div class="sku">3 סוגי סטים</div>
+<strong>ספרדי · אשכנזי · אתרוג תימני</strong>
+</div>
+<div style="font-size:1.5rem;font-weight:900">₪130</div>
+</div>
+<div class="header-actions">
+<button class="btn btn-primary" onclick="openNewOrder()">
+<i class="fa-solid fa-plus">
+</i> הזמנה ידנית חדשה</button>
+<button class="btn btn-excel" onclick="exportExcel(true)">
+<i class="fa-solid fa-file-excel">
+</i> Excel כל ההזמנות</button>
+<button class="btn btn-danger" id="resetAllBtn" onclick="resetAllOrders(this)">
+<i class="fa-solid fa-trash-can">
+</i> איפוס כל המערכת</button>
+</div>
+</div>
+</header>
+<section class="stats">
+<div class="stat">
+<div class="label">סה״כ רשומות</div>
+<div class="value" id="totalOrders">0</div>
+</div>
+<div class="stat today">
+<div class="label">היום</div>
+<div class="value" id="todayOrders">0</div>
+</div>
+<div class="stat">
+<div class="label">סה״כ סטים</div>
+<div class="value" id="totalUnits">0</div>
+</div>
+<div class="stat paid">
+<div class="label">שולם</div>
+<div class="value" id="paidCount">0</div>
+</div>
+<div class="stat unpaid">
+<div class="label">ממתין לתשלום</div>
+<div class="value" id="pendingCount">0</div>
+</div>
+</section>
+<section class="product-summary" aria-label="סיכום לפי סוג סט">
+<button type="button" class="product-stat" data-product-key="sef" onclick="setProductFilter('sef')">
+<span class="product-stat-name">סט ספרדי<small>מספר הסטים שהוזמנו</small></span><span class="product-stat-value" id="sefUnits">0</span>
+</button>
+<button type="button" class="product-stat" data-product-key="ash" onclick="setProductFilter('ash')">
+<span class="product-stat-name">סט אשכנזי<small>מספר הסטים שהוזמנו</small></span><span class="product-stat-value" id="ashUnits">0</span>
+</button>
+<button type="button" class="product-stat" data-product-key="yem" onclick="setProductFilter('yem')">
+<span class="product-stat-name">סט עם אתרוג תימני<small>מספר הסטים שהוזמנו</small></span><span class="product-stat-value" id="yemUnits">0</span>
+</button>
+</section>
+<section class="toolbar">
+<div class="field">
+<label>חיפוש</label>
+<input id="search" class="control" placeholder="שם, טלפון, אימייל, עיר או מספר הזמנה" oninput="render()">
+</div>
+<div class="field">
+<label>סטטוס תשלום</label>
+<select id="paymentFilter" class="control" onchange="render()">
+<option value="all">הכול</option>
+<option value="paid">שולם</option>
+<option value="pending">ממתין</option>
+</select>
+</div>
+<div class="field">
+<label>סוג סט</label>
+<select id="productFilter" class="control" onchange="render()">
+<option value="all">כל הסטים</option>
+<option value="sef">סט ספרדי</option>
+<option value="ash">סט אשכנזי</option>
+<option value="yem">סט עם אתרוג תימני</option>
+</select>
+</div>
+<div class="field">
+<label>אופן קבלה</label>
+<select id="shippingFilter" class="control" onchange="render()">
+<option value="all">הכול</option>
+<option value="איסוף עצמי">איסוף עצמי</option>
+<option value="משלוח">משלוח</option>
+</select>
+</div>
+<button class="btn btn-secondary" onclick="clearFilters()">ניקוי</button>
+</section>
+<section class="table-card">
+<div class="table-head">
+<div>
+<h2>הזמנות</h2>
+<div class="mini" id="visibleCount">מציג 0</div>
+</div>
+<div class="table-actions">
+<button class="btn btn-excel" onclick="exportExcel(false)">
+<i class="fa-solid fa-file-excel">
+</i> Excel לפי החיפוש</button>
+<button class="btn btn-ghost" onclick="openNewOrder()">הזמנה חדשה</button>
+</div>
+</div>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>מס׳ קבלה / הזמנה</th>
+<th>תאריך</th>
+<th>לקוח</th>
+<th>טלפון</th>
+<th>כמות</th>
+<th>סוג הסט</th>
+<th>קבלה</th>
+<th>סכום</th>
+<th>סטטוס תשלום</th>
+<th>הערות</th>
+<th>פעולות</th>
+</tr>
+</thead>
+<tbody id="ordersBody">
+<tr>
+<td class="empty" colspan="11">טוען הזמנות...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<div class="modal" id="orderModal" onclick="if(event.target===this)closeOrderModal()">
+<div class="modal-card">
+<div class="modal-head">
+<h2 id="modalTitle">הזמנה חדשה</h2>
+<button class="close-btn" onclick="closeOrderModal()">×</button>
+</div>
+<form id="orderForm" class="form-body" onsubmit="saveOrder(event)">
+<input type="hidden" id="editDocId">
+<input type="hidden" id="editOrderId">
+<div class="form-grid">
+<div class="field">
+<label>שם לקוח *</label>
+<input id="fName" class="control" required>
+</div>
+<div class="field">
+<label>טלפון *</label>
+<input id="fPhone" class="control" required>
+</div>
+<div class="field">
+<label>אימייל</label>
+<input id="fEmail" type="email" class="control">
+</div>
+<div class="field product-qty-wrap">
+<label>כמות לפי סוג סט *</label>
+<div class="product-qty-grid">
+<label class="product-qty-card">סט ספרדי<input id="fQtySef" type="number" min="0" value="1" class="control" oninput="refreshFormTotal()"></label>
+<label class="product-qty-card">סט אשכנזי<input id="fQtyAsh" type="number" min="0" value="0" class="control" oninput="refreshFormTotal()"></label>
+<label class="product-qty-card">סט עם אתרוג תימני<input id="fQtyYem" type="number" min="0" value="0" class="control" oninput="refreshFormTotal()"></label>
+</div>
+</div>
+<div class="field">
+<label>אופן קבלה</label>
+<select id="fShipping" class="control" onchange="toggleAddress();refreshFormTotal()">
+<option value="איסוף עצמי">איסוף עצמי</option>
+<option value="משלוח">משלוח (+₪45)</option>
+</select>
+</div>
+<div class="field">
+<label>תאריך</label>
+<input id="fDate" type="datetime-local" class="control">
+</div>
+<div class="field address">
+<label>עיר</label>
+<input id="fCity" class="control">
+</div>
+<div class="field address">
+<label>רחוב</label>
+<input id="fStreet" class="control">
+</div>
+<div class="field address">
+<label>בית</label>
+<input id="fHouse" class="control">
+</div>
+<div class="field address">
+<label>דירה</label>
+<input id="fApartment" class="control">
+</div>
+<div class="field full">
+<label>הערות</label>
+<textarea id="fNotes" class="control">
+</textarea>
+</div>
+<label class="checkline full">
+<input id="fPaid" type="checkbox"> ההזמנה שולמה</label>
+<div class="unknown-items-note" id="unknownItemsNote"></div>
+<div class="summary-box">
+<span>סכום ההזמנה</span>
+<strong id="formTotal">₪130</strong>
+</div>
+</div>
+<div class="form-footer">
+<button id="saveOrderBtn" type="submit" class="btn btn-save">שמירה</button>
+<button type="button" class="btn btn-secondary" onclick="closeOrderModal()">ביטול</button>
+</div>
+</form>
+</div>
+</div>
+<div class="toast" id="toast">
+</div>
+<script type="text/plain" id="legacy-firebase">
+<td class="empty" colspan="10">שגיאה בטעינת הנתונים.</td>
+</tr>'});window.dbCreateOrder=p=>addDoc(collection(db,'orders'),p);window.dbUpdateOrder=(id,p)=>updateDoc(doc(db,'orders',id),p);window.dbDeleteOrder=id=>deleteDoc(doc(db,'orders',id));window.setPaid=(id,v)=>updateDoc(doc(db,'orders',id),{paid:v,paymentStatus:v?'paid':'unpaid',orderStatus:v?'completed':'waiting_for_payment',paidUpdatedAt:new Date().toISOString()});</script>
+<script type="text/plain" id="legacy-admin">
+<td>
+<span class="receipt-number">#${String(Number(o.receiptNumber)||0).padStart(3,'0')}</span>
+<div class="receipt-order-id">${esc(o.orderId||'-')}</div>
+</td>
+<td>${esc(formatDate(o.date))}</td>
+<td>
+<strong>${esc(c.name||'-')}</strong>
+<div class="mini">${esc(c.city||'')}</div>
+</td>
+<td>${esc(c.phone||'-')}<div class="mini">${esc(c.email||'')}</div>
+</td>
+<td>${q}</td>
+<td>
+<span class="badge ${ship==='משלוח'?'delivery':'pickup'}">${esc(ship)}</span>
+</td>
+<td class="money">₪${Number(o.totalPrice||q*UNIT_PRICE).toLocaleString('he-IL')}</td>
+<td>
+<div class="pay-state ${st.key}">
+<i class="fa-solid ${st.icon}">
+</i>${esc(st.label)}</div>${st.key==='failed'?'<span class="failed-note">אין להכין הזמנה לפני בדיקת תשלום</span>':''}<div style="margin-top:7px">
+<button class="btn btn-ghost" style="padding:6px 9px;font-size:.72rem" onclick="togglePaid('${o._docId}',${paid},this)">${paid?'סמן לא שולם':'סמן שולם ידנית'}</button>
+</div>
+</td>
+<td>${esc(c.notes||o.notes||'-')}</td>
+<td>
+<div class="row-actions">
+<button class="icon-btn" onclick="openEditOrder('${o._docId}')">✎</button>
+<button class="icon-btn delete" onclick="deleteOrder('${o._docId}')">🗑</button>
+</div>
+</td>
+</tr>`}).join(''):'<tr>
+<td class="empty" colspan="10">לא נמצאו הזמנות תואמות.</td>
+</tr>'}function exportExcel(allRows){const rows=allRows?(window.orders||[]):getFilteredOrders();if(!rows.length){alert('אין נתונים לייצוא.');return}const data=rows.map(o=>{const c=o.customer||{},st=paymentState(o),q=qty(o),ship=o.shippingMethod||'איסוף עצמי';return{'מספר קבלה':Number(o.receiptNumber)||'','מספר הזמנה':o.orderId||'','תאריך':formatDate(o.date),'שם לקוח':c.name||'','טלפון':c.phone||'','אימייל':c.email||'','כמות':q,'אופן קבלה':ship,'עיר':c.city||'','רחוב':c.street||'','בית':c.houseNumber||c.house||'','דירה':c.apartmentNumber||c.apartment||'','סכום':Number(o.totalPrice||q*UNIT_PRICE),'סטטוס תשלום':st.label,'הערות':c.notes||o.notes||''}});const ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'הזמנות');XLSX.writeFile(wb,allRows?'orders-all.xlsx':'orders-filtered.xlsx')}function toLocalInput(iso){const d=iso?new Date(iso):new Date(),p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}function openNewOrder(){orderForm.reset();editDocId.value='';editOrderId.value='';fQty.value=1;fDate.value=toLocalInput();fShipping.value='איסוף עצמי';toggleAddress();refreshFormTotal();orderModal.classList.add('active')}function openEditOrder(id){const o=(window.orders||[]).find(x=>x._docId===id);if(!o)return;const c=o.customer||{};editDocId.value=id;editOrderId.value=o.orderId||'';fName.value=c.name||'';fPhone.value=c.phone||'';fEmail.value=c.email||'';fQty.value=qty(o);fShipping.value=o.shippingMethod||'איסוף עצמי';fDate.value=toLocalInput(o.date);fCity.value=c.city||'';fStreet.value=c.street||'';fHouse.value=c.houseNumber||c.house||'';fApartment.value=c.apartmentNumber||c.apartment||'';fNotes.value=c.notes||o.notes||'';fPaid.checked=paymentState(o).key==='paid';toggleAddress();refreshFormTotal();orderModal.classList.add('active')}function closeOrderModal(){orderModal.classList.remove('active')}function toggleAddress(){document.querySelectorAll('.address').forEach(el=>el.style.display=fShipping.value==='משלוח'?'grid':'none')}function refreshFormTotal(){formTotal.textContent='₪'+(Math.max(1,Number(fQty.value||1))*UNIT_PRICE+(fShipping.value==='משלוח'?DELIVERY_PRICE:0))}function manualOrderId(){return'MAN-'+Date.now()}async function saveOrder(e){e.preventDefault();const q=Math.max(1,Number(fQty.value||1)),ship=fShipping.value,paid=fPaid.checked,payload={orderId:editOrderId.value||manualOrderId(),customer:{name:fName.value.trim(),phone:fPhone.value.trim(),email:fEmail.value.trim(),notes:fNotes.value.trim(),city:fCity.value.trim(),street:fStreet.value.trim(),houseNumber:fHouse.value.trim(),apartmentNumber:fApartment.value.trim()},items:[{id:1,sku:SKU,name:PRODUCT_NAME,qty:q,price:UNIT_PRICE}],paid,paymentStatus:paid?'paid':'unpaid',orderStatus:paid?'completed':'waiting_for_payment',shippingMethod:ship,totalPrice:q*UNIT_PRICE+(ship==='משלוח'?DELIVERY_PRICE:0),date:fDate.value?new Date(fDate.value).toISOString():new Date().toISOString(),manual:true};if(editDocId.value)await window.dbUpdateOrder(editDocId.value,payload);else await window.dbCreateOrder(payload);closeOrderModal()}async function deleteOrder(id){if(confirm('למחוק את ההזמנה?'))await window.dbDeleteOrder(id)}</script>
+<script type="module" src="firebase-admin.js?v=20260910-1"></script>
+<script src="admin.js?v=20260910-1" defer></script>
+</body>
+</html>
