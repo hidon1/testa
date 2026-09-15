@@ -5,440 +5,53 @@ const PRODUCT_CATALOG = {
   ash: { id: 2, sku: "ASH-001", name: "סט אשכנזי מהודר", shortName: "סט אשכנזי" },
   yem: { id: 3, sku: "YEM-001", name: "סט ספרדי עם אתרוג תימני", shortName: "סט עם אתרוג תימני" }
 };
-
-let editingUnknownItems = [];
-let toastTimer;
-
-function byId(id) {
-  return document.getElementById(id);
-}
-
-function esc(value) {
-  return String(value ?? "").replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  }[character]));
-}
-
-function numberValue(value, fallback = 0) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
-}
-
-function normalizeItems(order) {
-  const rawItems = Array.isArray(order.items) && order.items.length
-    ? order.items
-    : [{
-        id: order.productId,
-        sku: order.sku,
-        name: order.etrogType || order.product || order.productType || order.type || order["סוג אתרוג"] || "סט ארבעת המינים",
-        qty: order.quantity || order.qty || 1,
-        price: order.price || UNIT_PRICE
-      }];
-
-  return rawItems.map(item => ({
-    id: item.id,
-    sku: String(item.sku || ""),
-    name: String(item.name || item.productName || item.type || "סט ארבעת המינים"),
-    qty: Math.max(1, numberValue(item.qty ?? item.quantity, 1)),
-    price: Math.max(0, numberValue(item.price, UNIT_PRICE))
-  }));
-}
-
-function productKey(item) {
-  const sku = String(item?.sku || "").toUpperCase();
-  const name = String(item?.name || item || "");
-  if (sku.startsWith("YEM") || name.includes("תימני")) return "yem";
-  if (sku.startsWith("ASH") || name.includes("אשכנז")) return "ash";
-  if (sku.startsWith("SEF") || name.includes("ספרדי")) return "sef";
-  return "other";
-}
-
-function qty(order) {
-  return normalizeItems(order).reduce((sum, item) => sum + item.qty, 0);
-}
-
-function productSearchText(order) {
-  return normalizeItems(order).map(item => `${item.name} ${item.sku}`).join(" ");
-}
-
-function productSummaryText(order) {
-  return normalizeItems(order).map(item => `${item.name} × ${item.qty}`).join(" | ");
-}
-
-function totalForOrder(order) {
-  const savedTotal = Number(order.totalPrice);
-  if (Number.isFinite(savedTotal)) return savedTotal;
-  const itemsTotal = normalizeItems(order).reduce((sum, item) => sum + item.price * item.qty, 0);
-  return itemsTotal + ((order.shippingMethod || "איסוף עצמי") === "משלוח" ? DELIVERY_PRICE : 0);
-}
-
-function formatDate(value) {
-  if (!value) return "-";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("he-IL");
-}
-
-function paymentState(order) {
-  const status = String(order.paymentStatus || "").toLowerCase();
-  const paid = order.paid === true || ["paid", "paid_client_return", "approved", "success"].includes(status);
-  if (paid) return { key: "paid", label: "שולם", icon: "fa-circle-check", attemptFailed: false };
-  const attemptFailed = ["payment_failed", "failed", "failure", "declined", "cancelled"].includes(status)
-    || order.orderStatus === "not_completed"
-    || order.lastPaymentAttemptStatus === "failed";
-  return { key: "pending", label: "ממתין לתשלום", icon: "fa-clock", attemptFailed };
-}
-
-function orderMatchesProduct(order, key) {
-  return key === "all" || normalizeItems(order).some(item => productKey(item) === key);
-}
-
-function getFilteredOrders() {
-  const term = byId("search").value.trim().toLowerCase();
-  const payment = byId("paymentFilter").value;
-  const product = byId("productFilter").value;
-  const shipping = byId("shippingFilter").value;
-
-  return (window.orders || []).filter(order => {
-    const customer = order.customer || {};
-    const state = paymentState(order);
-    const searchable = [
-      order.receiptNumber,
-      order.orderId,
-      customer.name,
-      customer.phone,
-      customer.email,
-      customer.city,
-      productSearchText(order)
-    ].some(value => String(value || "").toLowerCase().includes(term));
-
-    return (!term || searchable)
-      && (payment === "all" || state.key === payment)
-      && orderMatchesProduct(order, product)
-      && (shipping === "all" || (order.shippingMethod || "איסוף עצמי") === shipping);
-  });
-}
-
-function clearFilters() {
-  byId("search").value = "";
-  byId("paymentFilter").value = "all";
-  byId("productFilter").value = "all";
-  byId("shippingFilter").value = "all";
-  render();
-}
-
-function setProductFilter(key) {
-  const select = byId("productFilter");
-  select.value = select.value === key ? "all" : key;
-  render();
-}
-
-function sameDay(value, comparison = new Date()) {
-  if (!value) return false;
-  const date = new Date(value);
-  return !Number.isNaN(date.getTime()) && date.toDateString() === comparison.toDateString();
-}
-
-function countProductUnits(orders, key) {
-  return orders.reduce((total, order) => total + normalizeItems(order)
-    .filter(item => productKey(item) === key)
-    .reduce((sum, item) => sum + item.qty, 0), 0);
-}
-
-function renderProductLines(order) {
-  return `<div class="product-lines">${normalizeItems(order).map(item => `
-    <div class="product-line"><span>${esc(item.name)}</span><strong>× ${item.qty}</strong></div>
-  `).join("")}</div>`;
-}
-
-async function togglePaid(id, current, button) {
-  button.disabled = true;
-  try {
-    await window.setPaid(id, !current);
-    showToast(!current ? "ההזמנה סומנה כשולמה" : "ההזמנה הוחזרה לממתין לתשלום");
-  } catch (error) {
-    console.error(error);
-    alert("לא ניתן היה לעדכן את מצב התשלום.");
-  } finally {
-    button.disabled = false;
-  }
-}
-
-function render() {
-  const allOrders = window.orders || [];
-  const filteredOrders = getFilteredOrders();
-  const states = allOrders.map(paymentState);
-  const activeProduct = byId("productFilter").value;
-
-  byId("totalOrders").textContent = allOrders.length;
-  byId("todayOrders").textContent = allOrders.filter(order => sameDay(order.date || order.createdAt)).length;
-  byId("totalUnits").textContent = allOrders.reduce((sum, order) => sum + qty(order), 0);
-  byId("paidCount").textContent = states.filter(state => state.key === "paid").length;
-  byId("pendingCount").textContent = states.filter(state => state.key === "pending").length;
-  byId("sefUnits").textContent = countProductUnits(allOrders, "sef");
-  byId("ashUnits").textContent = countProductUnits(allOrders, "ash");
-  byId("yemUnits").textContent = countProductUnits(allOrders, "yem");
-  document.querySelectorAll(".product-stat").forEach(card => card.classList.toggle("active", card.dataset.productKey === activeProduct));
-  byId("visibleCount").textContent = `מציג ${filteredOrders.length} מתוך ${allOrders.length}`;
-
-  byId("ordersBody").innerHTML = filteredOrders.length ? filteredOrders.map(order => {
-    const state = paymentState(order);
-    const shipping = order.shippingMethod || "איסוף עצמי";
-    const customer = order.customer || {};
-    const paid = state.key === "paid";
-    const receipt = Number(order.receiptNumber);
-
-    return `<tr>
-      <td>
-        <span class="receipt-number${receipt ? "" : " no-receipt"}">${receipt ? `#${String(receipt).padStart(3, "0")}` : "טרם הופקה"}</span>
-        <div class="receipt-order-id">${esc(order.orderId || "-")}</div>
-      </td>
-      <td>${esc(formatDate(order.date || order.createdAt))}</td>
-      <td><strong>${esc(customer.name || "-")}</strong><div class="mini">${esc(customer.city || "")}</div></td>
-      <td>${esc(customer.phone || "-")}<div class="mini">${esc(customer.email || "")}</div></td>
-      <td><strong>${qty(order)}</strong></td>
-      <td>${renderProductLines(order)}</td>
-      <td><span class="badge ${shipping === "משלוח" ? "delivery" : "pickup"}">${esc(shipping)}</span></td>
-      <td class="money">₪${totalForOrder(order).toLocaleString("he-IL")}</td>
-      <td>
-        <div class="pay-state ${state.key}"><i class="fa-solid ${state.icon}"></i>${esc(state.label)}</div>
-        ${state.attemptFailed ? '<span class="payment-attempt-note">ניסיון התשלום האחרון לא הושלם</span>' : ""}
-        <div style="margin-top:7px"><button class="btn btn-ghost" style="padding:6px 9px;font-size:.78rem" onclick="togglePaid('${esc(order._docId)}',${paid},this)">${paid ? "סמן ממתין לתשלום" : "סמן שולם ידנית"}</button></div>
-      </td>
-      <td>${esc(customer.notes || order.notes || "-")}</td>
-      <td><div class="row-actions">
-        <button class="icon-btn" title="עריכת ההזמנה" aria-label="עריכת ההזמנה" onclick="openEditOrder('${esc(order._docId)}')"><i class="fa-solid fa-pen"></i></button>
-        <button class="row-delete-btn" onclick="deleteOrder('${esc(order._docId)}')"><i class="fa-solid fa-trash"></i> מחיקה</button>
-      </div></td>
-    </tr>`;
-  }).join("") : '<tr><td class="empty" colspan="11">לא נמצאו הזמנות תואמות.</td></tr>';
-}
-
-function exportExcel(allRows) {
-  const rows = allRows ? (window.orders || []) : getFilteredOrders();
-  if (!rows.length) {
-    alert("אין נתונים לייצוא.");
-    return;
-  }
-
-  const data = rows.map(order => {
-    const customer = order.customer || {};
-    const state = paymentState(order);
-    const items = normalizeItems(order);
-    const unitsFor = key => items.filter(item => productKey(item) === key).reduce((sum, item) => sum + item.qty, 0);
-    return {
-      "מספר קבלה": Number(order.receiptNumber) || "",
-      "מספר הזמנה": order.orderId || "",
-      "תאריך": formatDate(order.date || order.createdAt),
-      "שם לקוח": customer.name || "",
-      "טלפון": customer.phone || "",
-      "אימייל": customer.email || "",
-      "פירוט מוצרים": productSummaryText(order),
-      "סט ספרדי": unitsFor("sef"),
-      "סט אשכנזי": unitsFor("ash"),
-      "סט עם אתרוג תימני": unitsFor("yem"),
-      "כמות כוללת": qty(order),
-      "אופן קבלה": order.shippingMethod || "איסוף עצמי",
-      "עיר": customer.city || "",
-      "רחוב": customer.street || "",
-      "בית": customer.houseNumber || customer.house || "",
-      "דירה": customer.apartmentNumber || customer.apartment || "",
-      "סכום": totalForOrder(order),
-      "סטטוס תשלום": state.label,
-      "הערות": customer.notes || order.notes || ""
-    };
-  });
-
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "הזמנות");
-  XLSX.writeFile(workbook, allRows ? "orders-all.xlsx" : "orders-filtered.xlsx");
-}
-
-function toLocalInput(value) {
-  const date = value ? new Date(value) : new Date();
-  const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;
-  const pad = number => String(number).padStart(2, "0");
-  return `${safeDate.getFullYear()}-${pad(safeDate.getMonth() + 1)}-${pad(safeDate.getDate())}T${pad(safeDate.getHours())}:${pad(safeDate.getMinutes())}`;
-}
-
-function setFormQuantities(items) {
-  const totals = { sef: 0, ash: 0, yem: 0 };
-  editingUnknownItems = [];
-  items.forEach(item => {
-    const key = productKey(item);
-    if (key in totals) totals[key] += item.qty;
-    else editingUnknownItems.push(item);
-  });
-  byId("fQtySef").value = totals.sef;
-  byId("fQtyAsh").value = totals.ash;
-  byId("fQtyYem").value = totals.yem;
-  const unknownNote = byId("unknownItemsNote");
-  unknownNote.classList.toggle("visible", editingUnknownItems.length > 0);
-  unknownNote.textContent = editingUnknownItems.length ? `פריטים ישנים שנשמרים בהזמנה: ${editingUnknownItems.map(item => `${item.name} × ${item.qty}`).join(", ")}` : "";
-}
-
-function getFormItems() {
-  const quantities = {
-    sef: Math.max(0, numberValue(byId("fQtySef").value)),
-    ash: Math.max(0, numberValue(byId("fQtyAsh").value)),
-    yem: Math.max(0, numberValue(byId("fQtyYem").value))
-  };
-  const selectedItems = Object.entries(quantities)
-    .filter(([, quantity]) => quantity > 0)
-    .map(([key, quantity]) => ({ ...PRODUCT_CATALOG[key], qty: quantity, price: UNIT_PRICE }));
-  return [...selectedItems, ...editingUnknownItems];
-}
-
-function openNewOrder() {
-  byId("orderForm").reset();
-  byId("editDocId").value = "";
-  byId("editOrderId").value = "";
-  setFormQuantities([{ ...PRODUCT_CATALOG.sef, qty: 1, price: UNIT_PRICE }]);
-  byId("fDate").value = toLocalInput();
-  byId("fShipping").value = "איסוף עצמי";
-  byId("fPaid").checked = false;
-  toggleAddress();
-  refreshFormTotal();
-  byId("orderModal").classList.add("active");
-}
-
-function openEditOrder(id) {
-  const order = (window.orders || []).find(item => item._docId === id);
-  if (!order) return;
-  const customer = order.customer || {};
-  byId("editDocId").value = id;
-  byId("editOrderId").value = order.orderId || "";
-  byId("fName").value = customer.name || "";
-  byId("fPhone").value = customer.phone || "";
-  byId("fEmail").value = customer.email || "";
-  setFormQuantities(normalizeItems(order));
-  byId("fShipping").value = order.shippingMethod || "איסוף עצמי";
-  byId("fDate").value = toLocalInput(order.date || order.createdAt);
-  byId("fCity").value = customer.city || "";
-  byId("fStreet").value = customer.street || "";
-  byId("fHouse").value = customer.houseNumber || customer.house || "";
-  byId("fApartment").value = customer.apartmentNumber || customer.apartment || "";
-  byId("fNotes").value = customer.notes || order.notes || "";
-  byId("fPaid").checked = paymentState(order).key === "paid";
-  toggleAddress();
-  refreshFormTotal();
-  byId("orderModal").classList.add("active");
-}
-
-function closeOrderModal() {
-  byId("orderModal").classList.remove("active");
-}
-
-function toggleAddress() {
-  document.querySelectorAll(".address").forEach(element => {
-    element.style.display = byId("fShipping").value === "משלוח" ? "grid" : "none";
-  });
-}
-
-function refreshFormTotal() {
-  const itemsTotal = getFormItems().reduce((sum, item) => sum + item.qty * item.price, 0);
-  const delivery = byId("fShipping").value === "משלוח" ? DELIVERY_PRICE : 0;
-  byId("formTotal").textContent = `₪${(itemsTotal + delivery).toLocaleString("he-IL")}`;
-}
-
-function manualOrderId() {
-  return `MAN-${Date.now()}`;
-}
-
-async function saveOrder(event) {
-  event.preventDefault();
-  const items = getFormItems();
-  if (!items.length) {
-    alert("יש לבחור לפחות סט אחד.");
-    return;
-  }
-  const shipping = byId("fShipping").value;
-  const paid = byId("fPaid").checked;
-  const totalPrice = items.reduce((sum, item) => sum + item.qty * item.price, 0) + (shipping === "משלוח" ? DELIVERY_PRICE : 0);
-  const payload = {
-    orderId: byId("editOrderId").value || manualOrderId(),
-    customer: {
-      name: byId("fName").value.trim(),
-      phone: byId("fPhone").value.trim(),
-      email: byId("fEmail").value.trim(),
-      notes: byId("fNotes").value.trim(),
-      city: byId("fCity").value.trim(),
-      street: byId("fStreet").value.trim(),
-      houseNumber: byId("fHouse").value.trim(),
-      apartmentNumber: byId("fApartment").value.trim()
-    },
-    items,
-    productTypes: items.map(item => item.name),
-    productSummary: items.map(item => ({ sku: item.sku, name: item.name, qty: item.qty })),
-    paid,
-    paymentStatus: paid ? "paid" : "waiting_for_payment",
-    orderStatus: paid ? "completed" : "waiting_for_payment",
-    shippingMethod: shipping,
-    totalPrice,
-    date: byId("fDate").value ? new Date(byId("fDate").value).toISOString() : new Date().toISOString(),
-    manual: true
-  };
-
-  const saveButton = byId("saveOrderBtn");
-  saveButton.disabled = true;
-  try {
-    if (byId("editDocId").value) await window.dbUpdateOrder(byId("editDocId").value, payload);
-    else await window.dbCreateOrder(payload);
-    closeOrderModal();
-    showToast("ההזמנה נשמרה בהצלחה");
-  } catch (error) {
-    console.error(error);
-    alert("לא ניתן היה לשמור את ההזמנה.");
-  } finally {
-    saveButton.disabled = false;
-  }
-}
-
-async function deleteOrder(id) {
-  if (!confirm("למחוק את שורת ההזמנה הזאת? הפעולה אינה ניתנת לביטול.")) return;
-  try {
-    await window.dbDeleteOrder(id);
-    showToast("שורת ההזמנה נמחקה");
-  } catch (error) {
-    console.error(error);
-    alert("לא ניתן היה למחוק את ההזמנה.");
-  }
-}
-
-async function resetAllOrders(button) {
-  const ids = (window.orders || []).map(order => order._docId).filter(Boolean);
-  if (!ids.length) {
-    alert("המערכת כבר ריקה.");
-    return;
-  }
-  if (!confirm(`פעולה זו תמחק את כל ${ids.length} ההזמנות מהמערכת. להמשיך?`)) return;
-  if (prompt('לאישור סופי, יש לכתוב את המילה "איפוס"') !== "איפוס") {
-    alert("האיפוס בוטל.");
-    return;
-  }
-  button.disabled = true;
-  try {
-    await window.dbDeleteAllOrders(ids);
-    showToast("כל ההזמנות נמחקו והמערכת אופסה");
-  } catch (error) {
-    console.error(error);
-    alert("האיפוס לא הושלם. יש לרענן ולבדוק אילו שורות נשארו.");
-  } finally {
-    button.disabled = false;
-  }
-}
-
-function showToast(message) {
-  const toast = byId("toast");
-  toast.textContent = message;
-  toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
-}
-
-window.render = render;
-render();
+let editingUnknownItems = [], toastTimer;
+const byId=id=>document.getElementById(id);
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+function numberValue(v,f=0){const n=Number(v);return Number.isFinite(n)?n:f;}
+function normalizeItems(order){const raw=Array.isArray(order.items)&&order.items.length?order.items:[{id:order.productId,sku:order.sku,name:order.etrogType||order.product||order.productType||order.type||order["סוג אתרוג"]||"סט ארבעת המינים",qty:order.quantity||order.qty||1,price:order.price||UNIT_PRICE}];return raw.map(i=>({id:i.id,sku:String(i.sku||""),name:String(i.name||i.productName||i.type||"סט ארבעת המינים"),qty:Math.max(1,numberValue(i.qty??i.quantity,1)),price:Math.max(0,numberValue(i.price,UNIT_PRICE))}));}
+function productKey(i){const sku=String(i?.sku||"").toUpperCase(),name=String(i?.name||i||"");if(sku.startsWith("YEM")||name.includes("תימני"))return"yem";if(sku.startsWith("ASH")||name.includes("אשכנז"))return"ash";if(sku.startsWith("SEF")||name.includes("ספרדי"))return"sef";return"other";}
+function qty(o){return normalizeItems(o).reduce((s,i)=>s+i.qty,0)}
+function productSearchText(o){return normalizeItems(o).map(i=>`${i.name} ${i.sku}`).join(" ")}
+function productSummaryText(o){return normalizeItems(o).map(i=>`${i.name} × ${i.qty}`).join(" | ")}
+function totalForOrder(o){const t=Number(o.totalPrice);if(Number.isFinite(t))return t;return normalizeItems(o).reduce((s,i)=>s+i.price*i.qty,0)+((o.shippingMethod||"איסוף עצמי")==="משלוח"?DELIVERY_PRICE:0)}
+function formatDate(v){if(!v)return"-";const d=new Date(v);return Number.isNaN(d.getTime())?"-":d.toLocaleString("he-IL")}
+function paymentState(o){const status=String(o.paymentStatus||"").toLowerCase(),paid=o.paid===true||["paid","paid_client_return","approved","success"].includes(status);if(paid)return{key:"paid",label:"שולם",icon:"fa-circle-check",attemptFailed:false};const failed=["payment_failed","failed","failure","declined","cancelled"].includes(status)||o.orderStatus==="not_completed"||o.lastPaymentAttemptStatus==="failed";return{key:"pending",label:"ממתין לתשלום",icon:"fa-clock",attemptFailed:failed}}
+function delivered(o){return o.delivered===true||o.deliveryStatus==="delivered"}
+function addressParts(o){const c=o.customer||{};return[c.street,c.houseNumber||c.house,c.city].filter(Boolean)}
+function addressText(o){const c=o.customer||{};return addressParts(o).join(" ")+(c.entrance?` כניסה ${c.entrance}`:"")+(c.apartmentNumber||c.apartment?` דירה ${c.apartmentNumber||c.apartment}`:"")}
+function wazeUrl(o){return `https://www.waze.com/ul?q=${encodeURIComponent(addressParts(o).join(" "))}&navigate=yes`}
+function addressHtml(o){const c=o.customer||{};if((o.shippingMethod||"איסוף עצמי")!=="משלוח")return c.city?`<div class="mini">${esc(c.city)}</div>`:"";return `<div class="delivery-address-lines"><div><b>עיר:</b> ${esc(c.city||"-")}</div><div><b>רחוב:</b> ${esc(c.street||"-")}</div><div><b>מספר בית:</b> ${esc(c.houseNumber||c.house||"-")}</div>${c.entrance?`<div><b>כניסה:</b> ${esc(c.entrance)}</div>`:""}${c.apartmentNumber||c.apartment?`<div><b>דירה:</b> ${esc(c.apartmentNumber||c.apartment)}</div>`:""}<a class="waze-link" target="_blank" rel="noopener" href="${wazeUrl(o)}"><i class="fa-brands fa-waze"></i> פתח ב-Waze</a></div>`}
+function orderMatchesProduct(o,k){return k==="all"||normalizeItems(o).some(i=>productKey(i)===k)}
+function getFilteredOrders(){const term=byId("search").value.trim().toLowerCase(),payment=byId("paymentFilter").value,product=byId("productFilter").value,shipping=byId("shippingFilter").value;return(window.orders||[]).filter(o=>{const c=o.customer||{},state=paymentState(o),search=[o.receiptNumber,o.orderId,c.name,c.phone,c.email,c.city,c.street,productSearchText(o)].some(v=>String(v||"").toLowerCase().includes(term));return(!term||search)&&(payment==="all"||state.key===payment)&&orderMatchesProduct(o,product)&&(shipping==="all"||(o.shippingMethod||"איסוף עצמי")===shipping)})}
+function clearFilters(){byId("search").value="";byId("paymentFilter").value="all";byId("productFilter").value="all";byId("shippingFilter").value="all";render()}
+function setProductFilter(k){const s=byId("productFilter");s.value=s.value===k?"all":k;render()}
+function sameDay(v,c=new Date()){if(!v)return false;const d=new Date(v);return!Number.isNaN(d.getTime())&&d.toDateString()===c.toDateString()}
+function countProductUnits(os,k){return os.reduce((t,o)=>t+normalizeItems(o).filter(i=>productKey(i)===k).reduce((s,i)=>s+i.qty,0),0)}
+function renderProductLines(o){return`<div class="product-lines">${normalizeItems(o).map(i=>`<div class="product-line"><span>${esc(i.name)}</span><strong>× ${i.qty}</strong></div>`).join("")}</div>`}
+async function togglePaid(id,current,button){button.disabled=true;try{await window.setPaid(id,!current);showToast(!current?"ההזמנה סומנה כשולמה":"ההזמנה הוחזרה לממתין לתשלום")}catch(e){console.error(e);alert("לא ניתן היה לעדכן את מצב התשלום.")}finally{button.disabled=false}}
+async function toggleDelivered(id,current,button){button.disabled=true;try{await window.setDelivered(id,!current);showToast(!current?"ההזמנה סומנה כנמסרה":"ההזמנה הוחזרה ללא נמסרה")}catch(e){console.error(e);alert("לא ניתן היה לעדכן את מצב המסירה.")}finally{button.disabled=false}}
+function render(){const all=window.orders||[],filtered=getFilteredOrders(),states=all.map(paymentState),active=byId("productFilter").value;byId("totalOrders").textContent=all.length;byId("todayOrders").textContent=all.filter(o=>sameDay(o.date||o.createdAt)).length;byId("totalUnits").textContent=all.reduce((s,o)=>s+qty(o),0);byId("paidCount").textContent=states.filter(s=>s.key==="paid").length;byId("pendingCount").textContent=states.filter(s=>s.key==="pending").length;byId("sefUnits").textContent=countProductUnits(all,"sef");byId("ashUnits").textContent=countProductUnits(all,"ash");byId("yemUnits").textContent=countProductUnits(all,"yem");document.querySelectorAll(".product-stat").forEach(c=>c.classList.toggle("active",c.dataset.productKey===active));byId("visibleCount").textContent=`מציג ${filtered.length} מתוך ${all.length}`;byId("ordersBody").innerHTML=filtered.length?filtered.map(o=>{const state=paymentState(o),shipping=o.shippingMethod||"איסוף עצמי",c=o.customer||{},paid=state.key==="paid",done=delivered(o),receipt=Number(o.receiptNumber);return`<tr><td><span class="receipt-number${receipt?"":" no-receipt"}">${receipt?`#${String(receipt).padStart(3,"0")}`:"טרם הופקה"}</span><div class="receipt-order-id">${esc(o.orderId||"-")}</div></td><td>${esc(formatDate(o.date||o.createdAt))}</td><td><strong>${esc(c.name||"-")}</strong>${addressHtml(o)}</td><td>${esc(c.phone||"-")}<div class="mini">${esc(c.email||"")}</div></td><td><strong>${qty(o)}</strong></td><td>${renderProductLines(o)}</td><td><span class="badge ${shipping==="משלוח"?"delivery":"pickup"}">${esc(shipping)}</span></td><td class="money">₪${totalForOrder(o).toLocaleString("he-IL")}</td><td><div class="pay-state ${state.key}"><i class="fa-solid ${state.icon}"></i>${esc(state.label)}</div>${state.attemptFailed?'<span class="payment-attempt-note">ניסיון התשלום האחרון לא הושלם</span>':""}<div class="delivery-state ${done?"done":""}">${done?'<i class="fa-solid fa-box-circle-check"></i> נמסר':""}</div><div class="status-buttons"><button class="btn btn-ghost" onclick="togglePaid('${esc(o._docId)}',${paid},this)">${paid?"החזר לממתין":"סמן שולם"}</button>${paid?`<button class="btn ${done?"btn-secondary":"btn-delivered"}" onclick="toggleDelivered('${esc(o._docId)}',${done},this)">${done?"בטל נמסר":"סמן נמסר"}</button>`:""}</div></td><td>${esc(c.notes||o.notes||"-")}</td><td><div class="row-actions"><button class="icon-btn" onclick="openEditOrder('${esc(o._docId)}')"><i class="fa-solid fa-pen"></i></button><button class="row-delete-btn" onclick="deleteOrder('${esc(o._docId)}')"><i class="fa-solid fa-trash"></i> מחיקה</button></div></td></tr>`}).join(""):'<tr><td class="empty" colspan="11">לא נמצאו הזמנות תואמות.</td></tr>';if(byId("deliveryBoard")?.classList.contains("active"))renderDeliveryBoard()}
+function excelRows(rows,deliveryOnly=false){return rows.map(o=>{const c=o.customer||{},state=paymentState(o),items=normalizeItems(o),units=k=>items.filter(i=>productKey(i)===k).reduce((s,i)=>s+i.qty,0);const base={"מספר הזמנה":o.orderId||"","שם לקוח":c.name||"","טלפון":c.phone||"","פירוט מוצרים":productSummaryText(o),"סט ספרדי":units("sef"),"סט אשכנזי":units("ash"),"סט עם אתרוג תימני":units("yem"),"כמות כוללת":qty(o),"עיר":c.city||"","רחוב":c.street||"","מספר בית":c.houseNumber||c.house||"","כניסה":c.entrance||"","דירה":c.apartmentNumber||c.apartment||"","כתובת מלאה":addressText(o),"קישור Waze":wazeUrl(o),"נמסר":delivered(o)?"כן":"לא"};if(deliveryOnly)return base;return{"מספר קבלה":Number(o.receiptNumber)||"","תאריך":formatDate(o.date||o.createdAt),"אימייל":c.email||"",...base,"אופן קבלה":o.shippingMethod||"איסוף עצמי","סכום":totalForOrder(o),"סטטוס תשלום":state.label,"הערות":c.notes||o.notes||""}})}
+function writeExcel(data,name,sheet){const ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,sheet);XLSX.writeFile(wb,name)}
+function exportExcel(allRows){const rows=allRows?(window.orders||[]):getFilteredOrders();if(!rows.length)return alert("אין נתונים לייצוא.");writeExcel(excelRows(rows),allRows?"orders-all.xlsx":"orders-filtered.xlsx","הזמנות")}
+function deliveryOrders(){return(window.orders||[]).filter(o=>(o.shippingMethod||"איסוף עצמי")==="משלוח").sort((a,b)=>String(a.customer?.city||"").localeCompare(String(b.customer?.city||""),"he"))}
+function openDeliveryBoard(){byId("deliveryBoard").classList.add("active");renderDeliveryBoard()}
+function closeDeliveryBoard(){byId("deliveryBoard").classList.remove("active")}
+function renderDeliveryBoard(){const board=byId("deliveryBoardBody");if(!board)return;const orders=deliveryOrders(),groups={};orders.forEach(o=>{const city=o.customer?.city||"ללא עיר";(groups[city]??=[]).push(o)});board.innerHTML=orders.length?Object.entries(groups).map(([city,list])=>`<section class="city-group"><div class="city-title"><h3>${esc(city)}</h3><span>${list.length} משלוחים · ${list.reduce((s,o)=>s+qty(o),0)} סטים</span></div><div class="delivery-grid">${list.map(o=>{const c=o.customer||{},done=delivered(o);return`<article class="delivery-card ${done?"delivered":""}"><div class="delivery-card-top"><strong>${esc(c.name||"-")}</strong><span>${done?"נמסר":"למסירה"}</span></div><div class="delivery-address">${esc(addressText(o)||"כתובת חסרה")}</div><div class="delivery-products">${esc(productSummaryText(o))}</div><a class="delivery-phone" href="tel:${esc(c.phone||"")}">${esc(c.phone||"-")}</a><div class="delivery-actions"><a class="btn btn-waze" target="_blank" rel="noopener" href="${wazeUrl(o)}"><i class="fa-brands fa-waze"></i> Waze</a><button class="btn ${done?"btn-secondary":"btn-delivered"}" onclick="toggleDelivered('${esc(o._docId)}',${done},this)">${done?"בטל נמסר":"סמן נמסר"}</button></div></article>`}).join("")}</div></section>`).join(""):'<div class="empty">אין כרגע משלוחים.</div>'}
+function exportDeliveries(){const rows=deliveryOrders();if(!rows.length)return alert("אין משלוחים לייצוא.");writeExcel(excelRows(rows,true),"delivery-board.xlsx","לוח משלוחים")}
+function openWazeRoute(){const rows=deliveryOrders().filter(o=>!delivered(o)&&addressParts(o).length);if(!rows.length)return alert("אין כתובות פתוחות למסלול.");window.open(wazeUrl(rows[0]),"_blank","noopener")}
+function toLocalInput(v){const d=v?new Date(v):new Date(),s=Number.isNaN(d.getTime())?new Date():d,p=n=>String(n).padStart(2,"0");return`${s.getFullYear()}-${p(s.getMonth()+1)}-${p(s.getDate())}T${p(s.getHours())}:${p(s.getMinutes())}`}
+function setFormQuantities(items){const t={sef:0,ash:0,yem:0};editingUnknownItems=[];items.forEach(i=>{const k=productKey(i);if(k in t)t[k]+=i.qty;else editingUnknownItems.push(i)});byId("fQtySef").value=t.sef;byId("fQtyAsh").value=t.ash;byId("fQtyYem").value=t.yem;const n=byId("unknownItemsNote");n.classList.toggle("visible",editingUnknownItems.length>0);n.textContent=editingUnknownItems.length?`פריטים ישנים שנשמרים בהזמנה: ${editingUnknownItems.map(i=>`${i.name} × ${i.qty}`).join(", ")}`:""}
+function getFormItems(){const q={sef:Math.max(0,numberValue(byId("fQtySef").value)),ash:Math.max(0,numberValue(byId("fQtyAsh").value)),yem:Math.max(0,numberValue(byId("fQtyYem").value))};return[...Object.entries(q).filter(([,v])=>v>0).map(([k,v])=>({...PRODUCT_CATALOG[k],qty:v,price:UNIT_PRICE})),...editingUnknownItems]}
+function openNewOrder(){byId("orderForm").reset();byId("editDocId").value="";byId("editOrderId").value="";setFormQuantities([{...PRODUCT_CATALOG.sef,qty:1,price:UNIT_PRICE}]);byId("fDate").value=toLocalInput();byId("fShipping").value="איסוף עצמי";byId("fPaid").checked=false;toggleAddress();refreshFormTotal();byId("orderModal").classList.add("active")}
+function openEditOrder(id){const o=(window.orders||[]).find(i=>i._docId===id);if(!o)return;const c=o.customer||{};byId("editDocId").value=id;byId("editOrderId").value=o.orderId||"";byId("fName").value=c.name||"";byId("fPhone").value=c.phone||"";byId("fEmail").value=c.email||"";setFormQuantities(normalizeItems(o));byId("fShipping").value=o.shippingMethod||"איסוף עצמי";byId("fDate").value=toLocalInput(o.date||o.createdAt);byId("fCity").value=c.city||"";byId("fStreet").value=c.street||"";byId("fHouse").value=c.houseNumber||c.house||"";byId("fApartment").value=c.apartmentNumber||c.apartment||"";byId("fNotes").value=c.notes||o.notes||"";byId("fPaid").checked=paymentState(o).key==="paid";toggleAddress();refreshFormTotal();byId("orderModal").classList.add("active")}
+function closeOrderModal(){byId("orderModal").classList.remove("active")}
+function toggleAddress(){document.querySelectorAll(".address").forEach(e=>e.style.display=byId("fShipping").value==="משלוח"?"grid":"none")}
+function refreshFormTotal(){const t=getFormItems().reduce((s,i)=>s+i.qty*i.price,0)+(byId("fShipping").value==="משלוח"?DELIVERY_PRICE:0);byId("formTotal").textContent=`₪${t.toLocaleString("he-IL")}`}
+function manualOrderId(){return`MAN-${Date.now()}`}
+async function saveOrder(event){event.preventDefault();const items=getFormItems();if(!items.length)return alert("יש לבחור לפחות סט אחד.");const shipping=byId("fShipping").value,paid=byId("fPaid").checked,totalPrice=items.reduce((s,i)=>s+i.qty*i.price,0)+(shipping==="משלוח"?DELIVERY_PRICE:0),payload={orderId:byId("editOrderId").value||manualOrderId(),customer:{name:byId("fName").value.trim(),phone:byId("fPhone").value.trim(),email:byId("fEmail").value.trim(),notes:byId("fNotes").value.trim(),city:byId("fCity").value.trim(),street:byId("fStreet").value.trim(),houseNumber:byId("fHouse").value.trim(),apartmentNumber:byId("fApartment").value.trim()},items,productTypes:items.map(i=>i.name),productSummary:items.map(i=>({sku:i.sku,name:i.name,qty:i.qty})),paid,paymentStatus:paid?"paid":"waiting_for_payment",orderStatus:paid?"completed":"waiting_for_payment",shippingMethod:shipping,totalPrice,date:byId("fDate").value?new Date(byId("fDate").value).toISOString():new Date().toISOString(),manual:true};const b=byId("saveOrderBtn");b.disabled=true;try{if(byId("editDocId").value)await window.dbUpdateOrder(byId("editDocId").value,payload);else await window.dbCreateOrder(payload);closeOrderModal();showToast("ההזמנה נשמרה בהצלחה")}catch(e){console.error(e);alert("לא ניתן היה לשמור את ההזמנה.")}finally{b.disabled=false}}
+async function deleteOrder(id){if(!confirm("למחוק את שורת ההזמנה הזאת? הפעולה אינה ניתנת לביטול."))return;try{await window.dbDeleteOrder(id);showToast("שורת ההזמנה נמחקה")}catch(e){console.error(e);alert("לא ניתן היה למחוק את ההזמנה.")}}
+async function resetAllOrders(button){const ids=(window.orders||[]).map(o=>o._docId).filter(Boolean);if(!ids.length)return alert("המערכת כבר ריקה.");if(!confirm(`פעולה זו תמחק את כל ${ids.length} ההזמנות מהמערכת. להמשיך?`))return;if(prompt('לאישור סופי, יש לכתוב את המילה "איפוס"')!=="איפוס")return alert("האיפוס בוטל.");button.disabled=true;try{await window.dbDeleteAllOrders(ids);showToast("כל ההזמנות נמחקו והמערכת אופסה")}catch(e){console.error(e);alert("האיפוס לא הושלם. יש לרענן ולבדוק אילו שורות נשארו.")}finally{button.disabled=false}}
+function showToast(m){const t=byId("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600)}
+window.render=render;render();
