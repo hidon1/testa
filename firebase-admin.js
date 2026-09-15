@@ -72,5 +72,5 @@ window.markCustomerEmailSent = (id, type) => {
   return updateDoc(doc(db, "orders", id), payload);
 };
 
-import("./mail-actions.js?v=20260916-3");
+import("./mail-actions.js?v=20260916-4");
 import("./status-actions.js?v=20260916-1");
