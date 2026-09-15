@@ -1,7 +1,6 @@
 // Sends an abandoned-order follow-up through a Google Apps Script Web App.
-// Setup: deploy the supplied Apps Script as a Web App and paste its /exec URL below.
 (function () {
-  const APPS_SCRIPT_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_EXEC_URL_HERE";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIxSZe91CJl7c-u0ndDJlFThxR3kSKtABnF6KFh2lqPIiNvaFufJonI6egPtsplbd-/exec";
 
   function firstName(fullName) {
     return String(fullName || "").trim().split(/\s+/)[0] || "לקוח יקר";
@@ -15,11 +14,6 @@
       return;
     }
 
-    if (!APPS_SCRIPT_URL.startsWith("https://script.google.com/macros/s/") || !APPS_SCRIPT_URL.endsWith("/exec")) {
-      alert("עדיין לא הוגדרה כתובת Google Apps Script. אחרי הפריסה יש להדביק את כתובת ה-/exec בקובץ mail-actions.js.");
-      return;
-    }
-
     if (!confirm(`לשלוח עכשיו מייל השלמת הזמנה ל-${firstName(customer.name)} (${email})?`)) return;
 
     const oldHtml = button.innerHTML;
@@ -27,14 +21,11 @@
     button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> שולח...';
 
     try {
-      // application/x-www-form-urlencoded keeps this a simple browser request and avoids a CORS preflight.
       const body = new URLSearchParams({
         email,
         name: String(customer.name || "")
       });
 
-      // no-cors is used because Apps Script Web Apps do not expose configurable CORS headers.
-      // A successful fetch means the request reached the Web App; delivery is performed there.
       await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
@@ -49,7 +40,7 @@
       console.error("Follow-up email error:", err);
       button.disabled = false;
       button.innerHTML = oldHtml;
-      alert("לא הצלחנו לפנות ל-Google Apps Script. בדוק את כתובת ה-Web App ואת החיבור לאינטרנט.");
+      alert("לא הצלחנו לפנות ל-Google Apps Script. בדוק את החיבור לאינטרנט.");
     }
   }
 
