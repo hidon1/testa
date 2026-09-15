@@ -1,4 +1,4 @@
-// Customer mail actions: each email type can be sent only once per order.
+// Customer mail actions: compact buttons; each email type can be sent only once per order.
 (function () {
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIxSZe91CJl7c-u0ndDJlFThxR3kSKtABnF6KFh2lqPIiNvaFufJonI6egPtsplbd-/exec";
 
@@ -13,32 +13,21 @@
     const customer = order?.customer || {};
     const email = String(customer.email || "").trim();
     const thanks = type === "thanks";
-    const label = thanks ? "מייל תודה ואישור הזמנה" : "מייל השלמת הזמנה";
+    const label = thanks ? "מייל תודה" : "מייל השלמה";
     if (!email) return alert("ללקוח הזה לא שמורה כתובת אימייל.");
-    if (alreadySent(order, type)) return alert(`${label} כבר סומן כנשלח להזמנה זו.`);
-    if (!confirm(`לשלוח עכשיו ${label} ל-${firstName(customer.name)} (${email})?\n\nלאחר השליחה הכפתור יינעל כדי למנוע שליחה כפולה.`)) return;
+    if (alreadySent(order, type)) return alert(`${label} כבר נשלח להזמנה זו ולא ניתן לשלוח אותו שוב.`);
+    if (!confirm(`לשלוח עכשיו ${label} ל-${firstName(customer.name)} (${email})?\nלאחר השליחה לא יהיה ניתן לשלוח אותו שוב.`)) return;
 
     const oldHtml = button.innerHTML;
     button.disabled = true;
-    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> שולח...';
+    button.textContent = "שולח...";
     try {
-      const body = new URLSearchParams({
-        email,
-        name: String(customer.name || ""),
-        type,
-        shippingMethod: String(order.shippingMethod || "איסוף עצמי"),
-        orderId: String(order.orderId || "")
-      });
-      await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-        body: body.toString()
-      });
+      const body = new URLSearchParams({ email, name: String(customer.name || ""), type, shippingMethod: String(order.shippingMethod || "איסוף עצמי"), orderId: String(order.orderId || "") });
+      await fetch(APPS_SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" }, body: body.toString() });
       if (typeof window.markCustomerEmailSent === "function") await window.markCustomerEmailSent(order._docId, type);
-      button.innerHTML = '<i class="fa-solid fa-circle-check"></i> נשלח';
+      button.textContent = thanks ? "תודה נשלח" : "השלמה נשלח";
       button.disabled = true;
-      button.style.opacity = ".78";
+      button.style.opacity = ".58";
     } catch (err) {
       console.error("Customer email error:", err);
       button.disabled = false;
@@ -53,18 +42,19 @@
     const sent = alreadySent(order, type);
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `btn customer-mail-btn ${thanks ? "thanks-mail-btn" : "followup-mail-btn"}`;
+    button.className = `customer-mail-btn ${thanks ? "thanks-mail-btn" : "followup-mail-btn"}`;
+    button.style.cssText = "padding:2px 5px;font-size:.58rem;line-height:1.2;min-height:20px;white-space:nowrap;border-radius:4px;font-family:inherit;font-weight:700;cursor:pointer;box-shadow:none";
     if (sent) {
-      button.style.cssText = "padding:7px 10px;font-size:.72rem;white-space:nowrap;background:#eef2ef;color:#5d6b61;border:1px solid #cbd4cd;border-radius:7px;cursor:default";
-      button.innerHTML = thanks ? '<i class="fa-solid fa-circle-check"></i> מייל תודה נשלח' : '<i class="fa-solid fa-circle-check"></i> מייל השלמה נשלח';
+      button.style.cssText += ";background:#f1f3f1;color:#7a847d;border:1px solid #d6ddd8;cursor:default;opacity:.62";
+      button.textContent = thanks ? "תודה נשלח" : "השלמה נשלח";
       button.disabled = true;
     } else {
-      button.style.cssText = thanks
-        ? "padding:7px 10px;font-size:.72rem;white-space:nowrap;background:#16784b;color:#fff;border:1px solid #0f613b;border-radius:7px"
-        : "padding:7px 10px;font-size:.72rem;white-space:nowrap;background:#fff0e8;color:#a53a16;border:1px solid #efb99f;border-radius:7px";
-      button.innerHTML = thanks ? '<i class="fa-solid fa-gift"></i> מייל תודה / אושר' : '<i class="fa-solid fa-envelope-open-text"></i> מייל השלמת הזמנה';
+      button.style.cssText += thanks
+        ? ";background:#e9f7ee;color:#17663e;border:1px solid #a9d5b9"
+        : ";background:#fff3ec;color:#98411f;border:1px solid #e8bea9";
+      button.textContent = thanks ? "מייל תודה" : "מייל השלמה";
       button.disabled = !email;
-      if (!email) button.style.opacity = ".45";
+      if (!email) button.style.opacity = ".4";
       button.addEventListener("click", () => sendMail(order, button, type));
     }
     return button;
@@ -80,6 +70,8 @@
       if (!order) return;
       const actions = row.querySelector(".row-actions");
       if (!actions) return;
+      actions.style.gap = "3px";
+      actions.style.flexWrap = "wrap";
       if (!actions.querySelector(".followup-mail-btn")) actions.prepend(makeButton(order, "followup"));
       if (isPaid(order) && !actions.querySelector(".thanks-mail-btn")) actions.prepend(makeButton(order, "thanks"));
     });
