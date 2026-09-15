@@ -2,6 +2,8 @@
 // The draft is opened in Gmail with the customer's email, first name, subject and body pre-filled.
 (function () {
   const SUBJECT = "נשאר רק להשלים את ההזמנה שלך | שוק ארבעת המינים";
+  const STORE_URL = "https://4minim.click";
+  const WHATSAPP_URL = "https://wa.me/972552809503";
 
   function firstName(fullName) {
     return String(fullName || "").trim().split(/\s+/)[0] || "לקוח יקר";
@@ -18,12 +20,14 @@
 
 ארבעת המינים מהודרים, שירות אישי ומשלוחים לכל הארץ.
 
-[להשלמת ההזמנה]
+להשלמת ההזמנה:
+${STORE_URL}
 
 נתקלת בבעיה או שיש לך שאלה?
 אפשר לפנות אלינו ישירות בוואטסאפ ונשמח לסייע בהשלמת ההזמנה.
 
-[דברו איתנו בוואטסאפ]
+דברו איתנו בוואטסאפ:
+${WHATSAPP_URL}
 
 בברכת חג סוכות שמח,
 שוק ארבעת המינים
