@@ -24,11 +24,76 @@ const ordersCollection = collection(db, "orders");
 
 window.orders = [];
 
+function enhanceDeliveryAddresses() {
+  const rows = document.querySelectorAll("#ordersBody tr");
+  rows.forEach(row => {
+    if (row.dataset.addressEnhanced === "1") return;
+    const cells = row.querySelectorAll("td");
+    if (cells.length < 7) return;
+
+    const orderId = cells[0].querySelector(".receipt-order-id")?.textContent?.trim();
+    const order = (window.orders || []).find(item => String(item.orderId || "-") === orderId);
+    if (!order) return;
+
+    row.dataset.addressEnhanced = "1";
+    const customer = order.customer || {};
+    const customerCell = cells[2];
+    const existingMini = customerCell.querySelector(".mini");
+    if (existingMini) existingMini.remove();
+
+    const addressBox = document.createElement("div");
+    addressBox.className = "mini delivery-address-lines";
+    addressBox.style.marginTop = "4px";
+    addressBox.style.display = "grid";
+    addressBox.style.gap = "2px";
+
+    if ((order.shippingMethod || "איסוף עצמי") === "משלוח") {
+      const lines = [
+        ["עיר", customer.city],
+        ["רחוב", customer.street],
+        ["מספר בית", customer.houseNumber || customer.house],
+        ["כניסה", customer.entrance],
+        ["דירה", customer.apartmentNumber || customer.apartment]
+      ];
+      lines.forEach(([label, value]) => {
+        if (!value) return;
+        const line = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = `${label}: `;
+        line.append(strong, document.createTextNode(String(value)));
+        addressBox.appendChild(line);
+      });
+      if (!addressBox.children.length && customer.address) {
+        const line = document.createElement("div");
+        line.textContent = customer.address;
+        addressBox.appendChild(line);
+      }
+    } else if (customer.city) {
+      const line = document.createElement("div");
+      line.textContent = customer.city;
+      addressBox.appendChild(line);
+    }
+
+    customerCell.appendChild(addressBox);
+  });
+}
+
+const addressObserver = new MutationObserver(() => enhanceDeliveryAddresses());
+const startAddressObserver = () => {
+  const body = document.getElementById("ordersBody");
+  if (!body) return;
+  addressObserver.observe(body, { childList: true });
+  enhanceDeliveryAddresses();
+};
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startAddressObserver);
+else startAddressObserver();
+
 onSnapshot(ordersCollection, snapshot => {
   window.orders = snapshot.docs
     .map(orderDoc => ({ _docId: orderDoc.id, ...orderDoc.data() }))
     .sort((a, b) => new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0));
   window.render?.();
+  queueMicrotask(enhanceDeliveryAddresses);
 }, error => {
   console.error("שגיאה בטעינת ההזמנות:", error);
   const tableBody = document.getElementById("ordersBody");
