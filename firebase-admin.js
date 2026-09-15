@@ -64,6 +64,13 @@ window.setOrderStatus = (id, status) => {
   if (status === "cancelled") Object.assign(payload, { orderStatus: "cancelled", delivered: false, deliveryStatus: "cancelled", deliveredAt: null });
   return updateDoc(doc(db, "orders", id), payload);
 };
+window.markCustomerEmailSent = (id, type) => {
+  const now = new Date().toISOString();
+  const payload = type === "thanks"
+    ? { thanksEmailSent: true, thanksEmailSentAt: now }
+    : { followupEmailSent: true, followupEmailSentAt: now };
+  return updateDoc(doc(db, "orders", id), payload);
+};
 
-import("./mail-actions.js?v=20260916-2");
+import("./mail-actions.js?v=20260916-3");
 import("./status-actions.js?v=20260916-1");
