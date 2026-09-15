@@ -55,3 +55,6 @@ window.setDelivered = (id, delivered) => updateDoc(doc(db, "orders", id), {
   delivered,
   deliveredAt: delivered ? new Date().toISOString() : null
 });
+
+// Admin-only convenience UI: opens a pre-filled Gmail draft for the customer.
+import("./mail-actions.js?v=20260916-1");
