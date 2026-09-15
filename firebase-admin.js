@@ -55,6 +55,14 @@ window.setDelivered = (id, delivered) => updateDoc(doc(db, "orders", id), {
   delivered,
   deliveredAt: delivered ? new Date().toISOString() : null
 });
+window.setOrderStatus = (id, status) => {
+  const now = new Date().toISOString();
+  const payload = { adminStatus: status, adminStatusUpdatedAt: now };
+  if (status === "pending") Object.assign(payload, { paid: false, paymentStatus: "waiting_for_payment", orderStatus: "waiting_for_payment", delivered: false, deliveryStatus: "pending", deliveredAt: null });
+  if (status === "paid") Object.assign(payload, { paid: true, paymentStatus: "paid", orderStatus: "completed", delivered: false, deliveryStatus: "pending", paidUpdatedAt: now, deliveredAt: null });
+  if (status === "delivered") Object.assign(payload, { paid: true, paymentStatus: "paid", orderStatus: "completed", delivered: true, deliveryStatus: "delivered", paidUpdatedAt: now, deliveredAt: now });
+  if (status === "cancelled") Object.assign(payload, { orderStatus: "cancelled", delivered: false, deliveryStatus: "cancelled", deliveredAt: null });
+  return updateDoc(doc(db, "orders", id), payload);
+};
 
-// Admin-only convenience UI: opens a pre-filled Gmail draft for the customer.
-import("./mail-actions.js?v=20260916-1");
+import("./mail-actions.js?v=20260916-2");
